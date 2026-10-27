@@ -1,8 +1,11 @@
 import type { BrotliWasmType } from 'brotli-wasm'
 import LZString from 'lz-string'
 import { packHangul, unpackHangul } from './hangulCodec'
+import { decodeLegacyLz } from './legacyLz'
 
 export type Brotli = Pick<BrotliWasmType, 'compress' | 'DecompressStream' | 'BrotliStreamResultCode'>
+export type BrotliEncoder = Pick<Brotli, 'compress'>
+export type BrotliDecoder = Brotli | { decompressBounded(input: Uint8Array, limit: number): Uint8Array }
 const MAX_TEXT_BYTES = 4 * 1024 * 1024
 export const MAX_HASH_LENGTH = MAX_TEXT_BYTES * 3
 const encoder = new TextEncoder()
@@ -38,7 +41,7 @@ function frame(prefix: string, source: Uint8Array, compressed: Uint8Array): stri
   return prefix + toBase64(bytes)
 }
 
-export function encodeMarkdown(markdown: string, brotli: Brotli): string {
+export function encodeMarkdown(markdown: string, brotli: BrotliEncoder): string {
   const source = encoder.encode(markdown)
   if (source.length > MAX_TEXT_BYTES) throw new Error('공유할 수 있는 문서 크기는 최대 4MB입니다.')
   let shortest = LZString.compressToEncodedURIComponent(markdown)
@@ -54,7 +57,8 @@ export function encodeMarkdown(markdown: string, brotli: Brotli): string {
   return shortest
 }
 
-function decompressBounded(input: Uint8Array, limit: number, brotli: Brotli): Uint8Array {
+function decompressBounded(input: Uint8Array, limit: number, brotli: BrotliDecoder): Uint8Array {
+  if ('decompressBounded' in brotli) return brotli.decompressBounded(input, limit)
   const stream = new brotli.DecompressStream()
   const chunks: Uint8Array[] = []
   let offset = 0
@@ -98,14 +102,13 @@ function decompressBounded(input: Uint8Array, limit: number, brotli: Brotli): Ui
   return bytes
 }
 
-export function decodeMarkdown(raw: string, brotli?: Brotli): string {
+export function decodeMarkdown(raw: string, brotli?: BrotliDecoder): string {
   if (!raw) return ''
   if (raw.length > MAX_HASH_LENGTH) throw new Error('공유 링크가 너무 깁니다.')
   const hash = decodeURIComponent(raw)
   if (!hash.includes('.')) {
     const normalized = hash.replaceAll(' ', '+')
-    const text = LZString.decompressFromEncodedURIComponent(normalized)
-    if (text === null) throw invalidLink()
+    const text = decodeLegacyLz(normalized, MAX_TEXT_BYTES)
     if (encoder.encode(text).length > MAX_TEXT_BYTES) throw new Error('문서 크기가 4MB를 초과합니다.')
     if (LZString.compressToEncodedURIComponent(text) !== normalized) throw invalidLink()
     return text

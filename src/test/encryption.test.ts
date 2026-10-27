@@ -48,4 +48,4 @@ it('rejects wrong passwords, modified salt/IV/ciphertext, and truncated envelope
   await expect(decryptMarkdown('e1.AA', brotli, password)).rejects.toThrow()
   await expect(decryptMarkdown('e2.invalid', brotli, password)).rejects.toThrow()
   await expect(encryptMarkdown('secret', brotli, '')).rejects.toThrow()
-})
+}, 15_000) // This test intentionally performs several real 64 MiB Argon2 derivations.

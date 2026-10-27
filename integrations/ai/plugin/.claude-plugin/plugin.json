@@ -1,0 +1,6 @@
+{
+  "name": "raw-md-ai",
+  "version": "0.1.0",
+  "description": "Read raw-md links and export Markdown links with an offline CLI.",
+  "author": { "name": "raw-md" }
+}

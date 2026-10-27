@@ -1,5 +1,14 @@
 import LZString from 'lz-string'
-import { type Brotli, decodeMarkdown, encodeMarkdown, fromBase64, MAX_HASH_LENGTH, toBase64 } from './urlCodec'
+import { decodeLegacyLz } from './legacyLz'
+import {
+  type BrotliDecoder,
+  type BrotliEncoder,
+  decodeMarkdown,
+  encodeMarkdown,
+  fromBase64,
+  MAX_HASH_LENGTH,
+  toBase64,
+} from './urlCodec'
 
 // e1 fixes the KDF parameters; links cannot request attacker-controlled memory or work.
 const additionalData = new TextEncoder().encode('raw-md:e1:argon2id:65536:3:1:aes-256-gcm')
@@ -24,7 +33,7 @@ async function deriveKey(password: string, salt: Uint8Array): Promise<CryptoKey>
   }
 }
 
-export async function encryptMarkdown(markdown: string, brotli: Brotli, password: string): Promise<string> {
+export async function encryptMarkdown(markdown: string, brotli: BrotliEncoder, password: string): Promise<string> {
   const hash = encodeMarkdown(markdown, brotli)
   const codec = hash.startsWith('b1.') ? 1 : hash.startsWith('j1.') ? 2 : 0
   const compressed = codec ? fromBase64(hash.slice(3)) : LZString.compressToUint8Array(markdown)
@@ -42,7 +51,7 @@ export async function encryptMarkdown(markdown: string, brotli: Brotli, password
   return `e1.${toBase64(envelope)}`
 }
 
-export async function decryptMarkdown(hash: string, brotli: Brotli, password: string): Promise<string> {
+export async function decryptMarkdown(hash: string, brotli: BrotliDecoder, password: string): Promise<string> {
   if (hash.length > MAX_HASH_LENGTH) throw new Error('공유 링크가 너무 깁니다.')
   if (!hash.startsWith('e1.')) throw new Error('지원하지 않는 공유 링크 형식입니다.')
   const envelope = fromBase64(hash.slice(3))
@@ -63,8 +72,8 @@ export async function decryptMarkdown(hash: string, brotli: Brotli, password: st
   if (codec === 1 || codec === 2)
     return decodeMarkdown(`${codec === 1 ? 'b1.' : 'j1.'}${toBase64(payload.subarray(1))}`, brotli)
   if (codec !== 0 || payload.length % 2 !== 1) throw unlockError()
-  const text = LZString.decompressFromUint8Array(payload.subarray(1))
-  if (text === null || toBase64(LZString.compressToUint8Array(text)) !== toBase64(payload.subarray(1)))
-    throw unlockError()
-  return decodeMarkdown(LZString.compressToEncodedURIComponent(text))
+  const text = decodeLegacyLz(payload.subarray(1))
+  if (new TextEncoder().encode(text).length > 4 * 1024 * 1024) throw unlockError()
+  if (toBase64(LZString.compressToUint8Array(text)) !== toBase64(payload.subarray(1))) throw unlockError()
+  return text
 }

@@ -1,0 +1,21 @@
+{
+  "formatVersion": 2,
+  "artifact": "share.mjs",
+  "sha256": "f25af408da7b4b92158e170b0c79029ea0cce2b26046a1d91dc9d0de2ca0e14e",
+  "bytes": 48230,
+  "runtime": "node >=22",
+  "sdkExports": [
+    "createShareLink",
+    "readShareLink"
+  ],
+  "defaultBaseUrl": "https://raw-md.pages.dev/",
+  "modes": [
+    "plain",
+    "custom",
+    "secure"
+  ],
+  "maxSourceBytes": 4194304,
+  "maxPasswordBytes": 4096,
+  "checksum": "share.mjs.sha256",
+  "licenseNotices": "embedded in share.mjs"
+}

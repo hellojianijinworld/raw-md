@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
+import HelpDialog from './components/HelpDialog'
 import MarkdownEditor from './components/MarkdownEditor'
 import MarkdownViewer from './components/MarkdownViewer'
 import SharePopover from './components/SharePopover'
@@ -18,13 +19,14 @@ function App() {
   const [markdown, setMarkdown] = useState('')
   const [editMode, setEditMode] = useState<boolean>(() => isEditMode())
   const [copyStatus, setCopyStatus] = useState<CopyStatus>('idle')
-  const [copyingPassword, setCopyingPassword] = useState(false)
+  const [copyingText, setCopyingText] = useState(false)
   const [loadState, setLoadState] = useState<'loading' | 'ready' | 'locked' | 'error'>(() =>
     window.location.hash ? 'loading' : 'ready',
   )
   const [loadError, setLoadError] = useState('')
   const [unlocking, setUnlocking] = useState(false)
   const [shareOpen, setShareOpen] = useState(false)
+  const [helpOpen, setHelpOpen] = useState(false)
   const [shareMode, setShareMode] = useState<ShareMode>('plain')
   const protectedLink = shareMode !== 'plain'
   const [password, setPassword] = useState('')
@@ -32,15 +34,17 @@ function App() {
   const [privateDraftPending, setPrivateDraftPending] = useState(false)
   const { mode: colorMode, toggleTheme } = useTheme()
   const shareButtonRef = useRef<HTMLButtonElement>(null)
+  const helpButtonRef = useRef<HTMLButtonElement>(null)
   const lastCopiedRef = useRef<string>(markdown)
   const revisionRef = useRef(0)
   const privateDraftRef = useRef(false)
   const loadControllerRef = useRef<AbortController | null>(null)
   const copyControllerRef = useRef<AbortController | null>(null)
-  const passwordCopyPendingRef = useRef(false)
+  const textCopyPendingRef = useRef(false)
   const copyTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
   const isDirty = markdown !== lastCopiedRef.current
   const closeShare = useCallback(() => setShareOpen(false), [])
+  const closeHelp = useCallback(() => setHelpOpen(false), [])
 
   const loadDocument = useCallback(async (unlockPassword?: string) => {
     loadControllerRef.current?.abort()
@@ -156,23 +160,23 @@ function App() {
     if (privateDraftRef.current) setPrivateDraftPending(true)
   }
 
-  const handleCopyPassword = async (): Promise<boolean> => {
-    if (passwordCopyPendingRef.current || copyControllerRef.current || !password) return false
-    passwordCopyPendingRef.current = true
-    setCopyingPassword(true)
+  const handleCopyText = async (text: string): Promise<boolean> => {
+    if (textCopyPendingRef.current || copyControllerRef.current || !text) return false
+    textCopyPendingRef.current = true
+    setCopyingText(true)
     try {
-      await navigator.clipboard.writeText(password)
+      await navigator.clipboard.writeText(text)
       return true
     } catch {
       return false
     } finally {
-      passwordCopyPendingRef.current = false
-      setCopyingPassword(false)
+      textCopyPendingRef.current = false
+      setCopyingText(false)
     }
   }
 
   const handleCopyUrl = async () => {
-    if (passwordCopyPendingRef.current || copyControllerRef.current || (protectedLink && !password)) return
+    if (textCopyPendingRef.current || copyControllerRef.current || (protectedLink && !password)) return
     const controller = new AbortController()
     copyControllerRef.current = controller
     const revision = revisionRef.current
@@ -195,18 +199,35 @@ function App() {
   }
 
   return (
-    <div className="app">
+    <div className="app" inert={helpOpen}>
       <Toolbar
         isEditing={editMode}
         onToggleEdit={toggleEditMode}
-        onToggleShare={() => setShareOpen(!shareOpen)}
+        onToggleShare={() => {
+          setHelpOpen(false)
+          setShareOpen(!shareOpen)
+        }}
         shareOpen={shareOpen}
         shareButtonRef={shareButtonRef}
+        helpButtonRef={helpButtonRef}
+        helpOpen={helpOpen}
+        onToggleHelp={() => {
+          setShareOpen(false)
+          setHelpOpen(!helpOpen)
+        }}
         isDirty={isDirty || privateDraftPending}
         themeMode={colorMode}
         onToggleTheme={toggleTheme}
         disabled={loadState !== 'ready'}
       />
+      {helpOpen && (
+        <HelpDialog
+          anchor={helpButtonRef}
+          onClose={closeHelp}
+          onCopy={handleCopyText}
+          copying={copyStatus === 'compressing' || copyingText}
+        />
+      )}
       {shareOpen && (
         <SharePopover
           anchor={shareButtonRef}
@@ -214,7 +235,7 @@ function App() {
           mode={shareMode}
           password={password}
           status={copyStatus}
-          copyingPassword={copyingPassword}
+          copyingPassword={copyingText}
           linkLength={linkLength}
           onModeChange={handleShareModeChange}
           onPasswordChange={(value) => {
@@ -224,7 +245,7 @@ function App() {
             if (privateDraftRef.current) setPrivateDraftPending(true)
           }}
           onCopy={handleCopyUrl}
-          onCopyPassword={handleCopyPassword}
+          onCopyPassword={() => handleCopyText(password)}
           onClose={closeShare}
         />
       )}

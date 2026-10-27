@@ -136,6 +136,85 @@ async function input(selector: string, value: string) {
   })
 }
 
+it('opens optional AI help without changing the document and restores focus on Escape', async () => {
+  await act(() => root.render(<App />))
+  const source = '# 도움말을 열어도 남아 있는 초안\n\n원문 그대로 😀\n'
+  await edit(source)
+  const hash = window.location.hash
+  await act(() => button('도움말').click())
+  expect(document.querySelector('[role="dialog"]')?.textContent).toContain('웹에서 바로 사용하세요')
+  await act(() => document.querySelector<HTMLButtonElement>('#help-tab-ai')!.click())
+  const dialog = document.querySelector('[role="dialog"]')!
+  expect(dialog.textContent).toContain('문서 링크를 AI에게 건네세요')
+  expect(dialog.querySelector('a[download]')).toBeNull()
+  expect(dialog.textContent).not.toContain('개발자용 API')
+  const prompt = dialog.querySelector<HTMLTextAreaElement>('#ai-setup-prompt')!.value
+  expect(prompt).toContain('https://raw-md.pages.dev/ai/INSTALL.md')
+  await act(() => button('설치 요청 복사').click())
+  expect(copied).toBe(prompt)
+  expect(copied).not.toContain(source)
+  expect(copied).not.toContain(hash)
+  expect(dialog.querySelector('[role="status"]')?.textContent).toContain('AI 대화창')
+  expect(window.location.hash).toBe(hash)
+  expect(host.querySelector('textarea')?.value).toBe(source)
+  await act(() => document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true })))
+  expect(document.querySelector('[role="dialog"]')).toBeNull()
+  expect(document.activeElement).toBe(button('도움말'))
+})
+
+it('keeps setup instructions selectable when clipboard access fails and lets the user retry', async () => {
+  await act(() => root.render(<App />))
+  await act(() => button('도움말').click())
+  await act(() => document.querySelector<HTMLButtonElement>('#help-tab-ai')!.click())
+  vi.spyOn(navigator.clipboard, 'writeText').mockRejectedValueOnce(new Error('Permission denied'))
+  await act(() => button('설치 요청 복사').click())
+  expect(document.querySelector('[role="alert"]')?.textContent).toContain('직접 선택해 복사')
+  const field = document.querySelector<HTMLTextAreaElement>('#ai-setup-prompt')!
+  expect(field.readOnly).toBe(true)
+  await act(() => button('설치 요청 복사').click())
+  expect(copied).toBe(field.value)
+  expect(document.querySelector('[role="alert"]')).toBeNull()
+})
+
+it('serializes setup copying with document-link copying across help closure', async () => {
+  await act(() => root.render(<App />))
+  await edit('# 보관할 문서')
+  await act(() => button('도움말').click())
+  await act(() => document.querySelector<HTMLButtonElement>('#help-tab-ai')!.click())
+  let finish!: () => void
+  const write = vi.spyOn(navigator.clipboard, 'writeText').mockImplementationOnce(
+    (text) =>
+      new Promise<void>((resolve) => {
+        finish = () => {
+          copied = text
+          resolve()
+        }
+      }),
+  )
+  await act(() => button('설치 요청 복사').click())
+  expect(button('복사 중...').disabled).toBe(true)
+  await act(() => document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true })))
+  await act(() => button('링크').click())
+  expect(button('링크 복사').disabled).toBe(true)
+  expect(write).toHaveBeenCalledTimes(1)
+  await act(() => finish())
+  await act(() => button('링크 복사').click())
+  await act(() => CompressionWorker.finishAll())
+  expect(decodeMarkdown(new URL(copied).hash.slice(1), brotli)).toBe('# 보관할 문서')
+})
+
+it('keeps help and sharing separate and closes help from its backdrop', async () => {
+  await act(() => root.render(<App />))
+  await act(() => button('링크').click())
+  expect(document.querySelector('#share-popover')).not.toBeNull()
+  await act(() => button('도움말').click())
+  expect(document.querySelector('#share-popover')).toBeNull()
+  expect(document.querySelectorAll('[role="dialog"]')).toHaveLength(1)
+  await act(() => document.querySelector('.help-backdrop')!.dispatchEvent(new Event('pointerdown', { bubbles: true })))
+  expect(document.querySelector('[role="dialog"]')).toBeNull()
+  expect(button('도움말').getAttribute('aria-expanded')).toBe('false')
+})
+
 it('opens a popover with the exact UTF-8 source size without copying automatically, and closes on Escape', async () => {
   await act(() => root.render(<App />))
   const source = '# 한글 😀\n'

@@ -1,4 +1,4 @@
-import { Eye, Link2, Monitor, Moon, Pencil, Sun } from 'lucide-react'
+import { CircleHelp, Eye, Link2, Monitor, Moon, Pencil, Sun } from 'lucide-react'
 import type { RefObject } from 'react'
 import { useScrollToolbar } from '../hooks/useScrollToolbar'
 
@@ -10,6 +10,9 @@ interface ToolbarProps {
   onToggleShare: () => void
   shareOpen: boolean
   shareButtonRef: RefObject<HTMLButtonElement | null>
+  helpButtonRef: RefObject<HTMLButtonElement | null>
+  helpOpen: boolean
+  onToggleHelp: () => void
   isDirty: boolean
   themeMode: 'auto' | 'light' | 'dark'
   onToggleTheme: () => void
@@ -43,6 +46,9 @@ export default function Toolbar({
   onToggleShare,
   shareOpen,
   shareButtonRef,
+  helpButtonRef,
+  helpOpen,
+  onToggleHelp,
   isDirty,
   themeMode,
   onToggleTheme,
@@ -58,7 +64,7 @@ export default function Toolbar({
           <a href={window.location.pathname}>raw-md</a>
         </h1>
         <a
-          href="https://github.com/jinimong/raw-md"
+          href="https://github.com/hellojianijinworld/raw-md"
           target="_blank"
           rel="noopener noreferrer"
           className="btn btn-icon btn-github"
@@ -68,6 +74,18 @@ export default function Toolbar({
         </a>
       </div>
       <div className="toolbar-actions">
+        <button
+          type="button"
+          className="btn"
+          ref={helpButtonRef}
+          aria-label="도움말"
+          onClick={onToggleHelp}
+          aria-expanded={helpOpen}
+          aria-haspopup="dialog"
+        >
+          <CircleHelp size={16} />
+          <span className="btn-label">도움말</span>
+        </button>
         {isEditing && isDirty && <span className="toolbar-hint toolbar-hint-dirty">수정됨</span>}
         <button
           type="button"

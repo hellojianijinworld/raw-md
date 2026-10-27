@@ -527,6 +527,209 @@ body {
   --borderColor-neutral-muted: var(--borderColor-muted);
 }
 
+/* Optional help keeps the current document in place. */
+.help-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: #0007;
+}
+.help-dialog {
+  display: flex;
+  flex-direction: column;
+  width: min(760px, 100%);
+  max-height: calc(100dvh - 48px);
+  background: var(--bgColor-default);
+  border: 1px solid var(--borderColor-default);
+  border-radius: 16px;
+  box-shadow: 0 24px 80px #0004;
+  overflow: hidden;
+}
+.help-header,
+.help-header > div {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.help-header {
+  justify-content: space-between;
+  padding: 16px 24px 12px;
+}
+.help-header h2 {
+  font-size: 15px;
+  font-weight: 600;
+}
+.help-tabs {
+  display: flex;
+  gap: 20px;
+  padding: 0 24px;
+  border-bottom: 1px solid var(--borderColor-default);
+}
+.help-tabs > button {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 10px 2px 12px;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  background: transparent;
+  color: var(--fgColor-muted);
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+}
+.help-tabs > button[aria-selected="true"] {
+  border-bottom-color: var(--fgColor-default);
+  color: var(--fgColor-default);
+  font-weight: 600;
+}
+.help-optional {
+  border: 1px solid var(--borderColor-default);
+  border-radius: 20px;
+  padding: 0 6px;
+  font-size: 10px;
+  font-weight: 400;
+}
+.help-body {
+  padding: 28px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  font-size: 13px;
+}
+.help-eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 10px;
+  color: var(--fgColor-muted);
+  font-size: 12px;
+}
+.help-body h3 {
+  margin-bottom: 10px;
+  font-size: 24px;
+  font-weight: 650;
+  letter-spacing: -0.6px;
+}
+.help-lead {
+  max-width: 580px;
+  color: var(--fgColor-muted);
+  font-size: 14px;
+  line-height: 1.75;
+}
+.help-guide-steps {
+  list-style: none;
+  display: grid;
+  gap: 22px;
+  margin: 28px 0;
+}
+.help-guide-steps li {
+  display: flex;
+  gap: 14px;
+}
+.help-guide-steps li > span {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  flex-shrink: 0;
+  border: 1px solid var(--borderColor-default);
+  border-radius: 50%;
+  font-size: 12px;
+}
+.help-guide-steps p,
+.help-note p {
+  margin-top: 4px;
+  color: var(--fgColor-muted);
+  line-height: 1.75;
+}
+.help-note {
+  padding: 16px 18px;
+  border: 1px solid var(--borderColor-default);
+  border-radius: 10px;
+  background: var(--bgColor-muted);
+}
+.help-ai-entry {
+  margin-top: 22px;
+}
+.help-caption {
+  margin-top: 10px;
+  color: var(--fgColor-muted);
+  font-size: 12px;
+  line-height: 1.7;
+}
+.help-setup {
+  margin: 24px 0;
+}
+.help-body h4 {
+  margin-bottom: 8px;
+  font-size: 14px;
+  font-weight: 600;
+}
+.help-setup > p,
+.help-examples p {
+  color: var(--fgColor-muted);
+  font-size: 13px;
+  line-height: 1.7;
+}
+.help-setup textarea {
+  display: block;
+  width: 100%;
+  margin: 12px 0;
+  padding: 14px;
+  border: 1px solid var(--borderColor-default);
+  border-radius: 8px;
+  background: var(--bgColor-muted);
+  color: var(--fgColor-default);
+  font: 13px / 1.8 var(--font-sans);
+  resize: vertical;
+}
+.help-examples ul {
+  list-style: none;
+  display: grid;
+  gap: 10px;
+  margin-top: 12px;
+}
+.help-examples li {
+  padding: 14px 16px;
+  border: 1px solid var(--borderColor-default);
+  border-radius: 8px;
+}
+.help-examples strong {
+  font-size: 12px;
+  font-weight: 600;
+}
+.help-examples p {
+  margin-top: 4px;
+}
+.help-dialog :focus-visible {
+  outline: 2px solid var(--fgColor-accent);
+  outline-offset: 3px;
+}
+@media (max-width: 600px) {
+  .help-backdrop {
+    padding: 12px;
+  }
+  .help-dialog {
+    max-height: calc(100dvh - 24px);
+    border-radius: 12px;
+  }
+  .help-header {
+    padding: 12px 18px 8px;
+  }
+  .help-tabs {
+    padding: 0 18px;
+  }
+  .help-body {
+    padding: 22px 18px;
+  }
+  .help-body h3 {
+    font-size: 21px;
+  }
+}
+
 /* ========== 반응형 — 모바일 (≤768px) ========== */
 @media (max-width: 768px) and (orientation: portrait) {
   .viewer-container {

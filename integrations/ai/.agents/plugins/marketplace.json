@@ -1,0 +1,12 @@
+{
+  "name": "raw-md-ai",
+  "interface": { "displayName": "raw-md AI" },
+  "plugins": [
+    {
+      "name": "raw-md-ai",
+      "source": { "source": "local", "path": "./plugin" },
+      "policy": { "installation": "AVAILABLE", "authentication": "ON_INSTALL" },
+      "category": "Productivity"
+    }
+  ]
+}

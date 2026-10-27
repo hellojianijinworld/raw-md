@@ -5,10 +5,12 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "test": "vitest run",
-    "build": "tsc -b && vite build",
-    "lint": "biome check src/",
-    "format": "biome check --write src/",
+    "test": "npm run build:codec && npm run build:ai && vitest run --fileParallelism=false",
+    "build": "tsc -b && npm run build:codec && npm run build:ai && vite build",
+    "build:codec": "tsc -p tsconfig.agent.json && node scripts/build-codec.mjs",
+    "build:ai": "node scripts/package-ai.mjs",
+    "lint": "biome check src/ agent/ scripts/build-codec.mjs scripts/package-ai.mjs",
+    "format": "biome check --write src/ agent/ scripts/build-codec.mjs scripts/package-ai.mjs",
     "preview": "vite preview",
     "test:security": "vitest run --config vitest.security.config.ts"
   },
