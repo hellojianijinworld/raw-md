@@ -9,8 +9,7 @@ import { sanitizeSchema } from '../utils/sanitize'
 import MermaidDiagram from './MermaidDiagram'
 import 'github-markdown-css/github-markdown.css'
 import 'katex/dist/katex.min.css'
-import 'highlight.js/styles/github.css'
-import '../hljs-dark.css'
+import '../hljs-theme.css'
 
 interface MarkdownViewerProps {
   content: string

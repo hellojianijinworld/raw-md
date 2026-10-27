@@ -19,7 +19,8 @@ export const sanitizeSchema = {
       ['type', 'checkbox'],
     ],
     details: [['open', 'open']],
-    code: [['className', 'language-*']],
-    pre: [['className', 'language-*']],
+    // Class allowlists use regular expressions, not wildcard strings.
+    code: [['className', /^language-[\w-]+$/]],
+    pre: [['className', /^language-[\w-]+$/]],
   },
 } as const
