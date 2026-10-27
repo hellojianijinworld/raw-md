@@ -119,6 +119,202 @@ body {
   background-color: var(--bgColor-muted);
 }
 
+.btn:disabled {
+  cursor: default;
+  opacity: 0.6;
+}
+
+.document-status {
+  padding: 32px 24px;
+  text-align: center;
+  color: var(--fgColor-muted);
+}
+
+.document-status[role="alert"] {
+  color: var(--fgColor-danger);
+}
+
+.share-popover {
+  position: fixed;
+  top: 56px;
+  right: 16px;
+  z-index: 30;
+  width: min(360px, calc(100vw - 32px));
+  max-height: calc(100dvh - 72px);
+  overflow-y: auto;
+  padding: 20px;
+  border: 1px solid var(--borderColor-default);
+  border-radius: 14px;
+  background: var(--bgColor-default);
+  color: var(--fgColor-default);
+  box-shadow: 0 16px 48px #0003;
+  font-size: 14px;
+}
+
+.share-heading,
+.share-size > div,
+.password-field {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.share-heading h2,
+.unlock-card h2 {
+  font-size: 17px;
+  font-weight: 600;
+}
+.share-heading .btn {
+  border: 0;
+  color: var(--fgColor-muted);
+}
+.share-size {
+  padding: 16px 0;
+  margin-bottom: 16px;
+  border-bottom: 1px solid var(--borderColor-muted);
+}
+.share-size dd {
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+}
+.share-size dt span,
+.share-exact,
+.share-note {
+  color: var(--fgColor-muted);
+  font-size: 12px;
+}
+.share-size dt span {
+  margin-left: 4px;
+}
+.share-exact {
+  margin: 4px 0;
+}
+.share-modes {
+  border: 0;
+  min-width: 0;
+}
+.share-modes legend {
+  font-size: 13px;
+  margin-bottom: 8px;
+}
+.share-mode {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px;
+  border: 1px solid var(--borderColor-default);
+  border-radius: 8px;
+  margin-bottom: 6px;
+  cursor: pointer;
+}
+.share-mode-selected {
+  border-color: var(--fgColor-accent);
+  background: var(--bgColor-muted);
+}
+.share-mode input {
+  margin-top: 4px;
+  accent-color: var(--fgColor-accent);
+}
+.share-mode strong {
+  font-size: 13px;
+  font-weight: 600;
+}
+.share-mode-description {
+  display: block;
+  color: var(--fgColor-muted);
+  font-size: 12px;
+  margin-top: 2px;
+}
+.share-password {
+  margin-top: 16px;
+}
+.share-password-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.share-password label,
+.unlock-card label {
+  display: block;
+  font-size: 13px;
+  margin-bottom: 6px;
+}
+.share-password-heading label {
+  margin-bottom: 0;
+}
+.share-password-copy {
+  margin-top: 8px;
+  font-size: 12px;
+  padding: 4px 10px;
+}
+.password-field input,
+.unlock-card input {
+  min-width: 0;
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid var(--borderColor-default);
+  border-radius: 6px;
+  background: var(--bgColor-muted);
+  color: var(--fgColor-default);
+  font: inherit;
+}
+.password-field input:focus-visible,
+.unlock-card input:focus-visible,
+.btn:focus-visible {
+  outline: 2px solid var(--fgColor-accent);
+  outline-offset: 2px;
+}
+.share-note {
+  margin-top: 10px;
+  line-height: 1.6;
+}
+.share-copy {
+  width: 100%;
+  justify-content: center;
+  margin-top: 18px;
+  padding: 8px 16px;
+}
+.share-feedback {
+  font-size: 12px;
+  margin-top: 8px;
+  color: var(--fgColor-muted);
+}
+.share-feedback:empty {
+  display: none;
+}
+.share-feedback[role="alert"] {
+  color: var(--fgColor-danger);
+}
+.private-draft-note {
+  padding: 8px 16px;
+  background: var(--bgColor-muted);
+  color: var(--fgColor-muted);
+  font-size: 12px;
+}
+.unlock-container {
+  display: grid;
+  place-items: center;
+  flex: 1;
+  overflow-y: auto;
+  padding: 24px;
+}
+.unlock-card {
+  width: min(100%, 360px);
+  padding: 28px;
+  border: 1px solid var(--borderColor-default);
+  border-radius: 16px;
+}
+.unlock-card > svg {
+  color: var(--fgColor-muted);
+  margin-bottom: 16px;
+}
+.unlock-card label {
+  margin-top: 24px;
+}
+
 .btn-icon {
   padding: 6px;
   min-width: auto;

@@ -1,14 +1,19 @@
-import { Check, Eye, Link2, Monitor, Moon, Pencil, Sun } from 'lucide-react'
+import { Eye, Link2, Monitor, Moon, Pencil, Sun } from 'lucide-react'
+import type { RefObject } from 'react'
 import { useScrollToolbar } from '../hooks/useScrollToolbar'
+
+export type CopyStatus = 'idle' | 'compressing' | 'copied' | 'error'
 
 interface ToolbarProps {
   isEditing: boolean
   onToggleEdit: () => void
-  onCopyUrl: () => void
-  copyStatus: 'idle' | 'copied' | 'error'
+  onToggleShare: () => void
+  shareOpen: boolean
+  shareButtonRef: RefObject<HTMLButtonElement | null>
   isDirty: boolean
   themeMode: 'auto' | 'light' | 'dark'
   onToggleTheme: () => void
+  disabled: boolean
 }
 
 const themeIcons = {
@@ -35,11 +40,13 @@ function GitHubIcon({ size = 18 }: { size?: number }) {
 export default function Toolbar({
   isEditing,
   onToggleEdit,
-  onCopyUrl,
-  copyStatus,
+  onToggleShare,
+  shareOpen,
+  shareButtonRef,
   isDirty,
   themeMode,
   onToggleTheme,
+  disabled,
 }: ToolbarProps) {
   const toolbarVisible = useScrollToolbar()
   const ThemeIcon = themeIcons[themeMode]
@@ -62,13 +69,20 @@ export default function Toolbar({
       </div>
       <div className="toolbar-actions">
         {isEditing && isDirty && <span className="toolbar-hint toolbar-hint-dirty">수정됨</span>}
-        <button type="button" className="btn" onClick={onCopyUrl}>
-          {copyStatus === 'copied' ? <Check size={16} /> : <Link2 size={16} />}
-          <span className="btn-label">
-            {copyStatus === 'copied' ? '복사됨' : copyStatus === 'error' ? '실패' : '링크'}
-          </span>
+        <button
+          type="button"
+          className="btn"
+          ref={shareButtonRef}
+          onClick={onToggleShare}
+          disabled={disabled}
+          aria-expanded={shareOpen}
+          aria-controls={shareOpen ? 'share-popover' : undefined}
+          aria-haspopup="dialog"
+        >
+          <Link2 size={16} />
+          <span className="btn-label">링크</span>
         </button>
-        <button type="button" className="btn" onClick={onToggleEdit}>
+        <button type="button" className="btn" onClick={onToggleEdit} disabled={disabled}>
           {isEditing ? <Eye size={16} /> : <Pencil size={16} />}
           <span className="btn-label">{isEditing ? '뷰어' : '수정'}</span>
         </button>

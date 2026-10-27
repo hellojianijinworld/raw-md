@@ -9,11 +9,14 @@
     "build": "tsc -b && vite build",
     "lint": "biome check src/",
     "format": "biome check --write src/",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test:security": "vitest run --config vitest.security.config.ts"
   },
   "dependencies": {
     "@primer/primitives": "^11.7.1",
+    "brotli-wasm": "3.0.1",
     "github-markdown-css": "^5.9.0",
+    "hash-wasm": "4.12.0",
     "katex": "^0.16.45",
     "lucide-react": "^1.14.0",
     "lz-string": "^1.5.0",
