@@ -32,7 +32,7 @@ function App() {
   const [password, setPassword] = useState('')
   const [linkLength, setLinkLength] = useState<number>()
   const [privateDraftPending, setPrivateDraftPending] = useState(false)
-  const { mode: colorMode, toggleTheme } = useTheme()
+  const { mode: colorMode, setThemeMode } = useTheme()
   const shareButtonRef = useRef<HTMLButtonElement>(null)
   const helpButtonRef = useRef<HTMLButtonElement>(null)
   const lastCopiedRef = useRef<string>(markdown)
@@ -210,14 +210,13 @@ function App() {
         shareOpen={shareOpen}
         shareButtonRef={shareButtonRef}
         helpButtonRef={helpButtonRef}
-        helpOpen={helpOpen}
         onToggleHelp={() => {
           setShareOpen(false)
           setHelpOpen(!helpOpen)
         }}
         isDirty={isDirty || privateDraftPending}
         themeMode={colorMode}
-        onToggleTheme={toggleTheme}
+        onThemeChange={setThemeMode}
         disabled={loadState !== 'ready'}
       />
       {helpOpen && (

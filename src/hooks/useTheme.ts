@@ -22,10 +22,11 @@ export function useTheme(): {
   theme: Theme
   mode: ColorMode
   toggleTheme: () => void
+  setThemeMode: (mode: ColorMode) => void
 } {
   const [mode, setMode] = useState<ColorMode>(() => {
     const saved = localStorage.getItem('raw-md-color-mode') as ColorMode | null
-    return saved || 'auto'
+    return saved === 'light' || saved === 'dark' ? saved : 'auto'
   })
 
   const [theme, setTheme] = useState<Theme>(() => applyTheme(mode))
@@ -54,5 +55,5 @@ export function useTheme(): {
     })
   }, [])
 
-  return { theme, mode, toggleTheme }
+  return { theme, mode, toggleTheme, setThemeMode: setMode }
 }

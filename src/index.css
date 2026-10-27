@@ -70,6 +70,9 @@ body {
 }
 
 .logo a {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
   color: inherit;
   text-decoration: none;
 }
@@ -179,7 +182,6 @@ body {
   font-weight: 600;
 }
 .share-size dt span,
-.share-exact,
 .share-note {
   color: var(--fgColor-muted);
   font-size: 12px;
@@ -187,44 +189,42 @@ body {
 .share-size dt span {
   margin-left: 4px;
 }
-.share-exact {
-  margin: 4px 0;
-}
-.share-modes {
+.share-options {
   border: 0;
   min-width: 0;
 }
-.share-modes legend {
-  font-size: 13px;
+.share-options legend {
   margin-bottom: 8px;
+  font-size: 13px;
 }
-.share-mode {
+.share-option {
   display: flex;
   align-items: flex-start;
   gap: 10px;
-  padding: 10px;
   border: 1px solid var(--borderColor-default);
   border-radius: 8px;
-  margin-bottom: 6px;
+  padding: 12px;
+  margin-bottom: 8px;
   cursor: pointer;
 }
-.share-mode-selected {
+.share-option.selected {
   border-color: var(--fgColor-accent);
   background: var(--bgColor-muted);
 }
-.share-mode input {
+.share-option input {
   margin-top: 4px;
   accent-color: var(--fgColor-accent);
 }
-.share-mode strong {
-  font-size: 13px;
-  font-weight: 600;
-}
-.share-mode-description {
+.share-option strong {
   display: block;
+  font-size: 13px;
+}
+.share-option span span {
+  display: block;
+  margin-top: 4px;
   color: var(--fgColor-muted);
   font-size: 12px;
-  margin-top: 2px;
+  line-height: 1.6;
 }
 .share-password {
   margin-top: 16px;
@@ -245,10 +245,44 @@ body {
 .share-password-heading label {
   margin-bottom: 0;
 }
-.share-password-copy {
-  margin-top: 8px;
+.share-password-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-top: 10px;
+}
+.share-password-actions .btn {
   font-size: 12px;
-  padding: 4px 10px;
+  padding: 6px 10px;
+}
+#share-popover .password-field {
+  position: relative;
+}
+#share-password {
+  padding-right: 44px;
+}
+.password-visibility {
+  position: absolute;
+  right: 2px;
+  top: 2px;
+  bottom: 2px;
+  width: 38px;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--fgColor-muted);
+  cursor: pointer;
+}
+.password-visibility:hover {
+  background: var(--bgColor-neutral-muted);
+  color: var(--fgColor-default);
+}
+.password-visibility:focus-visible {
+  outline: 2px solid var(--fgColor-accent);
+  outline-offset: -2px;
 }
 .password-field input,
 .unlock-card input {
@@ -270,6 +304,11 @@ body {
 .share-note {
   margin-top: 10px;
   line-height: 1.6;
+}
+#share-popover .share-copy {
+  background: var(--fgColor-default);
+  color: var(--bgColor-default);
+  border-color: var(--fgColor-default);
 }
 .share-copy {
   width: 100%;
@@ -831,4 +870,92 @@ body {
   background-color: #3d1111;
   border-color: #662222;
   color: #ff8888;
+}
+
+#share-popover .share-copy:hover:not(:disabled) {
+  background: var(--fgColor-default);
+  opacity: 0.88;
+}
+
+.toolbar-menu {
+  position: relative;
+}
+.app-menu {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 10px);
+  width: 224px;
+  padding: 8px;
+  background: var(--bgColor-default);
+  border: 1px solid var(--borderColor-default);
+  border-radius: 10px;
+  box-shadow: 0 8px 24px #0003;
+}
+.app-menu-help {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 10px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--fgColor-default);
+  font: inherit;
+  cursor: pointer;
+  text-align: left;
+}
+.app-menu-help:hover {
+  background: var(--bgColor-muted);
+}
+.app-menu fieldset {
+  border: 0;
+  border-top: 1px solid var(--borderColor-muted);
+  margin-top: 6px;
+  padding: 10px;
+}
+.app-menu legend {
+  margin-bottom: 8px;
+  color: var(--fgColor-muted);
+  font-size: 12px;
+}
+.app-menu label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 0;
+  cursor: pointer;
+  font-size: 13px;
+}
+.app-menu input {
+  accent-color: var(--fgColor-accent);
+}
+
+.brand-mark {
+  display: inline-block;
+  width: 24px;
+  height: 24px;
+  flex-shrink: 0;
+  background: currentColor;
+  mask: url("./assets/logo.svg") center / contain no-repeat;
+}
+a.app-menu-help {
+  text-decoration: none;
+}
+
+.app-menu-version {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  border-top: 1px solid var(--borderColor-muted);
+  padding: 12px 10px 6px;
+  font-size: 12px;
+}
+.app-menu-version a {
+  color: var(--fgColor-muted);
+  text-decoration: none;
+}
+.app-menu-version a:hover {
+  color: var(--fgColor-accent);
+  text-decoration: underline;
 }

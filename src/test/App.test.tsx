@@ -50,6 +50,11 @@ function button(label: string): HTMLButtonElement {
   return found
 }
 
+async function openHelp() {
+  await act(() => document.querySelector<HTMLButtonElement>('[aria-label="메뉴"]')!.click())
+  await act(() => button('도움말').click())
+}
+
 async function edit(value: string) {
   await act(() => {
     const field = host.querySelector('textarea')!
@@ -105,7 +110,7 @@ it('copies a compressed snapshot without overwriting edits made while it was bei
   const source = '# 공유할 문서\n공백과 한글 원문을 그대로 공유합니다.\n'.repeat(60)
   await edit(source)
   await act(() => button('링크').click())
-  await act(() => button('링크 복사').click())
+  await act(() => button('공유 링크 복사하기').click())
   expect(button('만드는 중...').disabled).toBe(true)
   await edit('# 복사 도중 새로 작성한 문서')
   await act(() => CompressionWorker.finishAll())
@@ -120,7 +125,7 @@ it('replaces the draft URL with the compressed URL after a successful copy', asy
   const source = '# 공유 문서\n원문을 손실 없이 압축합니다.\n'.repeat(60)
   await edit(source)
   await act(() => button('링크').click())
-  await act(() => button('링크 복사').click())
+  await act(() => button('공유 링크 복사하기').click())
   await act(() => CompressionWorker.finishAll())
   expect(button('복사됨').disabled).toBe(false)
   expect(window.location.hash).toBe(new URL(copied).hash)
@@ -141,7 +146,7 @@ it('opens optional AI help without changing the document and restores focus on E
   const source = '# 도움말을 열어도 남아 있는 초안\n\n원문 그대로 😀\n'
   await edit(source)
   const hash = window.location.hash
-  await act(() => button('도움말').click())
+  await openHelp()
   expect(document.querySelector('[role="dialog"]')?.textContent).toContain('웹에서 바로 사용하세요')
   await act(() => document.querySelector<HTMLButtonElement>('#help-tab-ai')!.click())
   const dialog = document.querySelector('[role="dialog"]')!
@@ -159,12 +164,12 @@ it('opens optional AI help without changing the document and restores focus on E
   expect(host.querySelector('textarea')?.value).toBe(source)
   await act(() => document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true })))
   expect(document.querySelector('[role="dialog"]')).toBeNull()
-  expect(document.activeElement).toBe(button('도움말'))
+  expect(document.activeElement).toBe(document.querySelector('[aria-label="메뉴"]'))
 })
 
 it('keeps setup instructions selectable when clipboard access fails and lets the user retry', async () => {
   await act(() => root.render(<App />))
-  await act(() => button('도움말').click())
+  await openHelp()
   await act(() => document.querySelector<HTMLButtonElement>('#help-tab-ai')!.click())
   vi.spyOn(navigator.clipboard, 'writeText').mockRejectedValueOnce(new Error('Permission denied'))
   await act(() => button('설치 요청 복사').click())
@@ -179,7 +184,7 @@ it('keeps setup instructions selectable when clipboard access fails and lets the
 it('serializes setup copying with document-link copying across help closure', async () => {
   await act(() => root.render(<App />))
   await edit('# 보관할 문서')
-  await act(() => button('도움말').click())
+  await openHelp()
   await act(() => document.querySelector<HTMLButtonElement>('#help-tab-ai')!.click())
   let finish!: () => void
   const write = vi.spyOn(navigator.clipboard, 'writeText').mockImplementationOnce(
@@ -195,10 +200,10 @@ it('serializes setup copying with document-link copying across help closure', as
   expect(button('복사 중...').disabled).toBe(true)
   await act(() => document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true })))
   await act(() => button('링크').click())
-  expect(button('링크 복사').disabled).toBe(true)
+  expect(button('공유 링크 복사하기').disabled).toBe(true)
   expect(write).toHaveBeenCalledTimes(1)
   await act(() => finish())
-  await act(() => button('링크 복사').click())
+  await act(() => button('공유 링크 복사하기').click())
   await act(() => CompressionWorker.finishAll())
   expect(decodeMarkdown(new URL(copied).hash.slice(1), brotli)).toBe('# 보관할 문서')
 })
@@ -207,12 +212,12 @@ it('keeps help and sharing separate and closes help from its backdrop', async ()
   await act(() => root.render(<App />))
   await act(() => button('링크').click())
   expect(document.querySelector('#share-popover')).not.toBeNull()
-  await act(() => button('도움말').click())
+  await openHelp()
   expect(document.querySelector('#share-popover')).toBeNull()
   expect(document.querySelectorAll('[role="dialog"]')).toHaveLength(1)
   await act(() => document.querySelector('.help-backdrop')!.dispatchEvent(new Event('pointerdown', { bubbles: true })))
   expect(document.querySelector('[role="dialog"]')).toBeNull()
-  expect(button('도움말').getAttribute('aria-expanded')).toBe('false')
+  expect(document.querySelector('[aria-label="메뉴"]')?.getAttribute('aria-expanded')).toBe('false')
 })
 
 it('opens a popover with the exact UTF-8 source size without copying automatically, and closes on Escape', async () => {
@@ -236,9 +241,9 @@ it('copies a protected link, requires a password to open it, retries a wrong pas
   const password = '잊지 않을 긴 비밀번호 🔑'
   await edit(source)
   await act(() => button('링크').click())
-  await act(() => document.querySelector<HTMLInputElement>('#share-mode-custom')!.click())
+  await act(() => document.querySelector<HTMLInputElement>('#share-protection')!.click())
   await input('#share-password', password)
-  await act(() => button('링크 복사').click())
+  await act(() => button('공유 링크 복사하기').click())
   await act(() => CompressionWorker.finishAll())
   const encryptedHash = new URL(copied).hash
   expect(encryptedHash).toMatch(/^#e1\./)
@@ -261,8 +266,8 @@ it('copies a protected link, requires a password to open it, retries a wrong pas
   await edit('# 새 비공개 수정 내용')
   expect(window.location.hash).toBe(encryptedHash)
   await act(() => button('링크').click())
-  expect(document.querySelector<HTMLInputElement>('#share-mode-custom')!.checked).toBe(true)
-  await act(() => button('링크 복사').click())
+  expect(document.querySelector<HTMLInputElement>('#share-protection')!.checked).toBe(true)
+  await act(() => button('공유 링크 복사하기').click())
   await act(() => CompressionWorker.finishAll())
   expect(await decryptMarkdown(new URL(copied).hash.slice(1), brotli, password)).toBe('# 새 비공개 수정 내용')
 }, 15_000) // The full UI flow includes multiple real Argon2 encrypt/decrypt operations.
@@ -289,7 +294,7 @@ it('warns about the private draft even when protection is enabled on an unchange
   await act(() => root.render(<App />))
   await act(() => CompressionWorker.finishAll())
   await act(() => button('링크').click())
-  await act(() => document.querySelector<HTMLInputElement>('#share-mode-custom')!.click())
+  await act(() => document.querySelector<HTMLInputElement>('#share-protection')!.click())
   expect(window.location.hash).toBe('')
   await act(() => document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true })))
   expect(host.querySelector('.private-draft-note')?.textContent).toContain('링크를 다시 복사')
@@ -297,8 +302,8 @@ it('warns about the private draft even when protection is enabled on an unchange
   window.dispatchEvent(unsaved)
   expect(unsaved.defaultPrevented).toBe(true)
   await act(() => button('링크').click())
-  await act(() => document.querySelector<HTMLInputElement>('#share-mode-plain')!.click())
-  await act(() => button('링크 복사').click())
+  await act(() => document.querySelector<HTMLInputElement>('#share-plain')!.click())
+  await act(() => button('공유 링크 복사하기').click())
   await act(() => CompressionWorker.finishAll())
   expect(host.querySelector('.private-draft-note')).toBeNull()
   const saved = new Event('beforeunload', { cancelable: true })
@@ -311,19 +316,19 @@ it('generates a strong password and uses it for sharing without placing it in th
   const source = '# 원문이 알려져 있어도 보호할 문서\n'.repeat(30)
   await edit(source)
   await act(() => button('링크').click())
-  await act(() => document.querySelector<HTMLInputElement>('#share-mode-secure')!.click())
+  if (!document.querySelector<HTMLInputElement>('#share-protection')!.checked)
+    await act(() => document.querySelector<HTMLInputElement>('#share-protection')!.click())
+  await act(() => button('강력한 암호 자동 생성').click())
   const field = document.querySelector<HTMLInputElement>('#share-password')!
   const generated = field.value
   expect(generated).toMatch(/^[A-Za-z0-9_-]{22}$/)
-  expect(field.readOnly).toBe(true)
-  expect(document.querySelector<HTMLInputElement>('#share-mode-secure')!.checked).toBe(true)
+  expect(field.readOnly).toBe(false)
+  expect(document.querySelector<HTMLInputElement>('#share-protection')!.checked).toBe(true)
   await act(() => button('비밀번호 복사').click())
   expect(copied).toBe(generated)
-  await act(() => button('링크 복사').click())
+  await act(() => button('공유 링크 복사하기').click())
   expect(button('다시 생성').disabled).toBe(true)
-  expect(
-    [...document.querySelectorAll<HTMLInputElement>('input[name="share-mode"]')].every((item) => item.disabled),
-  ).toBe(true)
+  expect(document.querySelector<HTMLInputElement>('#share-protection')!.disabled).toBe(true)
   await act(() => CompressionWorker.finishAll())
   expect(copied).not.toContain(generated)
   expect(await decryptMarkdown(new URL(copied).hash.slice(1), brotli, generated)).toBe(source)
@@ -332,9 +337,16 @@ it('generates a strong password and uses it for sharing without placing it in th
 it('copies the exact custom password separately from the document link', async () => {
   await act(() => root.render(<App />))
   await act(() => button('링크').click())
-  await act(() => document.querySelector<HTMLInputElement>('#share-mode-custom')!.click())
+  await act(() => document.querySelector<HTMLInputElement>('#share-protection')!.click())
   const password = '  공백과 한글 🔑 preserve  '
   await input('#share-password', password)
+  const visibility = document.querySelector<HTMLButtonElement>('[aria-label="비밀번호 표시"]')!
+  expect(visibility.parentElement?.querySelector('input')?.id).toBe('share-password')
+  expect(document.querySelector<HTMLInputElement>('#share-password')!.type).toBe('password')
+  await act(() => visibility.click())
+  expect(document.querySelector<HTMLInputElement>('#share-password')!.type).toBe('text')
+  await act(() => document.querySelector<HTMLButtonElement>('[aria-label="비밀번호 숨기기"]')!.click())
+  expect(document.querySelector<HTMLInputElement>('#share-password')!.type).toBe('password')
   await act(() => button('비밀번호 복사').click())
   expect(copied).toBe(password)
   expect(CompressionWorker.pending).toHaveLength(0)
@@ -346,7 +358,9 @@ it('copies the exact custom password separately from the document link', async (
 it('reports password clipboard denial and lets the user retry', async () => {
   await act(() => root.render(<App />))
   await act(() => button('링크').click())
-  await act(() => document.querySelector<HTMLInputElement>('#share-mode-secure')!.click())
+  if (!document.querySelector<HTMLInputElement>('#share-protection')!.checked)
+    await act(() => document.querySelector<HTMLInputElement>('#share-protection')!.click())
+  await act(() => button('강력한 암호 자동 생성').click())
   vi.spyOn(navigator.clipboard, 'writeText').mockRejectedValueOnce(new Error('Permission denied'))
   await act(() => button('비밀번호 복사').click())
   expect(document.querySelector('[role="dialog"] [role="alert"]')?.textContent).toContain(
@@ -360,7 +374,7 @@ it('reports password clipboard denial and lets the user retry', async () => {
 it('does not report an old password as copied after it changes, or overlap password and URL writes', async () => {
   await act(() => root.render(<App />))
   await act(() => button('링크').click())
-  await act(() => document.querySelector<HTMLInputElement>('#share-mode-custom')!.click())
+  await act(() => document.querySelector<HTMLInputElement>('#share-protection')!.click())
   await input('#share-password', 'old password')
   let finish!: () => void
   vi.spyOn(navigator.clipboard, 'writeText').mockImplementationOnce(
@@ -370,18 +384,20 @@ it('does not report an old password as copied after it changes, or overlap passw
       }),
   )
   await act(() => button('비밀번호 복사').click())
-  expect(button('링크 복사').disabled).toBe(true)
+  expect(button('공유 링크 복사하기').disabled).toBe(true)
   await input('#share-password', 'new password')
-  expect(button('링크 복사').disabled).toBe(true)
+  expect(button('공유 링크 복사하기').disabled).toBe(true)
   await act(async () => finish())
   expect(button('비밀번호 복사').disabled).toBe(false)
-  expect(button('링크 복사').disabled).toBe(false)
+  expect(button('공유 링크 복사하기').disabled).toBe(false)
 })
 
 it('keeps clipboard writes serialized after closing and reopening the share popover', async () => {
   await act(() => root.render(<App />))
   await act(() => button('링크').click())
-  await act(() => document.querySelector<HTMLInputElement>('#share-mode-secure')!.click())
+  if (!document.querySelector<HTMLInputElement>('#share-protection')!.checked)
+    await act(() => document.querySelector<HTMLInputElement>('#share-protection')!.click())
+  await act(() => button('강력한 암호 자동 생성').click())
   let finish!: () => void
   const write = vi.spyOn(navigator.clipboard, 'writeText').mockImplementationOnce(
     () =>
@@ -392,27 +408,29 @@ it('keeps clipboard writes serialized after closing and reopening the share popo
   await act(() => button('비밀번호 복사').click())
   await act(() => document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true })))
   await act(() => button('링크').click())
-  expect(button('링크 복사').disabled).toBe(true)
+  expect(button('공유 링크 복사하기').disabled).toBe(true)
   expect(button('비밀번호 복사 중...').disabled).toBe(true)
-  await act(() => button('링크 복사').click())
+  await act(() => button('공유 링크 복사하기').click())
   expect(write).toHaveBeenCalledTimes(1)
   expect(CompressionWorker.pending).toHaveLength(0)
   await act(async () => finish())
   expect(button('비밀번호 복사').disabled).toBe(false)
-  expect(button('링크 복사').disabled).toBe(false)
+  expect(button('공유 링크 복사하기').disabled).toBe(false)
 })
 
-it('lets users switch among plain, custom, and automatically secured sharing without exposing private edits', async () => {
+it('toggles optional protection and generates or edits passwords without exposing private edits', async () => {
   await act(() => root.render(<App />))
   await edit('# 세 가지 공유 방식')
   await act(() => button('링크').click())
-  expect(document.querySelector<HTMLInputElement>('#share-mode-plain')!.checked).toBe(true)
+  expect(document.querySelector<HTMLInputElement>('#share-plain')!.checked).toBe(true)
   expect(document.querySelector('#share-password')).toBeNull()
-  await act(() => document.querySelector<HTMLInputElement>('#share-mode-custom')!.click())
+  await act(() => document.querySelector<HTMLInputElement>('#share-protection')!.click())
   expect(document.querySelector<HTMLInputElement>('#share-password')!.readOnly).toBe(false)
-  expect(button('링크 복사').disabled).toBe(true)
+  expect(button('공유 링크 복사하기').disabled).toBe(true)
   await input('#share-password', 'my manually chosen password')
-  await act(() => document.querySelector<HTMLInputElement>('#share-mode-secure')!.click())
+  if (!document.querySelector<HTMLInputElement>('#share-protection')!.checked)
+    await act(() => document.querySelector<HTMLInputElement>('#share-protection')!.click())
+  await act(() => button('강력한 암호 자동 생성').click())
   const automatic = document.querySelector<HTMLInputElement>('#share-password')!.value
   expect(automatic).toMatch(/^[A-Za-z0-9_-]{22}$/)
   expect(automatic).not.toBe('my manually chosen password')
@@ -421,12 +439,33 @@ it('lets users switch among plain, custom, and automatically secured sharing wit
   expect(document.querySelector<HTMLInputElement>('#share-password')!.value).toBe(automatic)
   await act(() => button('다시 생성').click())
   expect(document.querySelector<HTMLInputElement>('#share-password')!.value).not.toBe(automatic)
-  await act(() => document.querySelector<HTMLInputElement>('#share-mode-plain')!.click())
+  await input('#share-password', 'edited generated password')
+  expect(document.querySelector<HTMLInputElement>('#share-password')!.value).toBe('edited generated password')
+  expect(button('강력한 암호 자동 생성').disabled).toBe(false)
+  await act(() => document.querySelector<HTMLInputElement>('#share-plain')!.click())
   expect(document.querySelector('#share-password')).toBeNull()
   await edit('# 비밀이었던 원문을 명시적으로 공개 공유')
   expect(window.location.hash).toBe('')
-  await act(() => button('링크 복사').click())
+  await act(() => button('공유 링크 복사하기').click())
   await act(() => CompressionWorker.finishAll())
   expect(new URL(copied).hash).not.toMatch(/^#e1\./)
   expect(decodeMarkdown(new URL(copied).hash.slice(1), brotli)).toBe('# 비밀이었던 원문을 명시적으로 공개 공유')
+})
+
+it('selects explicit themes from the hamburger settings and keeps help accessible', async () => {
+  await act(() => root.render(<App />))
+  await act(() => document.querySelector<HTMLButtonElement>('[aria-label="메뉴"]')!.click())
+  expect(document.querySelector('#app-menu')?.textContent).toContain('시스템 설정')
+  expect(document.querySelector('.app-menu-version a')?.textContent).toBe('등록된 릴리즈 없음')
+  expect(document.querySelector('.app-menu-version a')?.getAttribute('href')).toBe(
+    'https://github.com/hellojianijinworld/raw-md/releases',
+  )
+  for (const mode of ['dark', 'light', 'auto']) {
+    await act(() => document.querySelector<HTMLInputElement>(`input[name="theme"][value="${mode}"]`)!.click())
+    expect(localStorage.getItem('raw-md-color-mode')).toBe(mode)
+    expect(document.documentElement.getAttribute('data-color-mode')).toBe(mode === 'dark' ? 'dark' : 'light')
+  }
+  await act(() => button('도움말').click())
+  expect(document.querySelector('#app-menu')).toBeNull()
+  expect(document.querySelector('[role="dialog"]')?.textContent).toContain('웹에서 바로 사용하세요')
 })
