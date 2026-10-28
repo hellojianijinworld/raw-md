@@ -6,6 +6,7 @@ import MarkdownViewer from './components/MarkdownViewer'
 import SharePopover from './components/SharePopover'
 import Toolbar, { type CopyStatus } from './components/Toolbar'
 import UnlockDocument from './components/UnlockDocument'
+import UpdateNotice from './components/UpdateNotice'
 import { useTheme } from './hooks/useTheme'
 import { localizedError, localizeMessage, translate as t } from './i18n/core'
 import { useI18n } from './i18n/useI18n'
@@ -547,6 +548,7 @@ function App() {
 
   return (
     <div className="app" inert={helpOpen || libraryOpen}>
+      <UpdateNotice />
       <Toolbar
         isEditing={editMode}
         onToggleEdit={toggleEditMode}
