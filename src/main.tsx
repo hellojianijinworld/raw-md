@@ -2,9 +2,9 @@ import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import './index.css'
 import App from './App.tsx'
+import { getLocale } from './i18n/core'
 
-// 브라우저 언어에 따라 lang 속성 동적 설정
-document.documentElement.lang = navigator.language
+document.documentElement.lang = getLocale()
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

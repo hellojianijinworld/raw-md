@@ -1,6 +1,8 @@
 import { ArrowRight, BookOpen, Check, Copy, Sparkles, X } from 'lucide-react'
 import { type RefObject, useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
+import { translate as t } from '../i18n/core'
+import { useI18n } from '../i18n/useI18n'
 
 interface Props {
   anchor: RefObject<HTMLButtonElement | null>
@@ -9,10 +11,10 @@ interface Props {
   copying: boolean
 }
 
-const setupPrompt = `아래 안내를 읽고, 지금 사용 중인 AI 환경에 raw-md 스킬을 설치해줘.
-https://raw-md.pages.dev/ai/INSTALL.md`
-
 export default function HelpDialog({ anchor, onClose, onCopy, copying }: Props) {
+  useI18n()
+  const setupPrompt = t('help.setupPrompt')
+
   const panel = useRef<HTMLDivElement>(null)
   const close = useRef<HTMLButtonElement>(null)
   const [tab, setTab] = useState<'guide' | 'ai'>('guide')
@@ -53,17 +55,17 @@ export default function HelpDialog({ anchor, onClose, onCopy, copying }: Props) 
         <header className="help-header">
           <div>
             <BookOpen size={19} />
-            <h2 id="help-heading">도움말</h2>
+            <h2 id="help-heading">{t('common.help')}</h2>
           </div>
-          <button ref={close} type="button" className="btn btn-icon" aria-label="도움말 닫기" onClick={onClose}>
+          <button ref={close} type="button" className="btn btn-icon" aria-label={t('help.close')} onClick={onClose}>
             <X size={18} />
           </button>
         </header>
-        <div className="help-tabs" role="tablist" aria-label="도움말 항목">
+        <div className="help-tabs" role="tablist" aria-label={t('help.tabs')}>
           {(
             [
-              ['guide', '사용 방법'],
-              ['ai', 'AI 연동'],
+              ['guide', t('help.guide')],
+              ['ai', t('help.ai')],
             ] as const
           ).map(([value, label]) => (
             <button
@@ -84,7 +86,7 @@ export default function HelpDialog({ anchor, onClose, onCopy, copying }: Props) 
               }}
             >
               {label}
-              {value === 'ai' && <span className="help-optional">선택</span>}
+              {value === 'ai' && <span className="help-optional">{t('common.optional')}</span>}
             </button>
           ))}
         </div>
@@ -97,44 +99,39 @@ export default function HelpDialog({ anchor, onClose, onCopy, copying }: Props) 
         >
           {tab === 'guide' ? (
             <>
-              <p className="help-eyebrow">설치 없이, 링크 하나로</p>
-              <h3>웹에서 바로 사용하세요</h3>
-              <p className="help-lead">
-                마크다운을 작성하고 링크를 공유하세요. 받는 사람은 주소를 열면 문서를 읽을 수 있습니다.
-              </p>
+              <p className="help-eyebrow">{t('help.eyebrow')}</p>
+              <h3>{t('help.title')}</h3>
+              <p className="help-lead">{t('help.lead')}</p>
               <ol className="help-guide-steps">
                 <li>
                   <span>1</span>
                   <div>
-                    <strong>문서 작성</strong>
-                    <p>수정을 눌러 작성하거나 .md 파일을 여세요. 코드, 수식, Mermaid 다이어그램도 표시됩니다.</p>
+                    <strong>{t('help.write')}</strong>
+                    <p>{t('help.writeText')}</p>
                   </div>
                 </li>
                 <li>
                   <span>2</span>
                   <div>
-                    <strong>링크 만들기</strong>
-                    <p>링크 버튼을 누르면 문서의 용량을 확인하고 공유 링크를 만들 수 있습니다.</p>
+                    <strong>{t('help.makeLink')}</strong>
+                    <p>{t('help.makeLinkText')}</p>
                   </div>
                 </li>
                 <li>
                   <span>3</span>
                   <div>
-                    <strong>링크 전달</strong>
-                    <p>링크 복사를 누른 뒤 원하는 곳에 붙여넣으세요. 받는 사람은 링크를 열면 됩니다.</p>
+                    <strong>{t('help.sendLink')}</strong>
+                    <p>{t('help.sendLinkText')}</p>
                   </div>
                 </li>
               </ol>
               <div className="help-note">
-                <strong>문서가 URL 안에 들어 있습니다.</strong>
-                <p>
-                  raw-md는 문서를 서버에 저장하지 않습니다. 문서함은 이 브라우저에만 저장되므로 중요한 문서는 링크나
-                  파일로 따로 보관해주세요.
-                </p>
+                <strong>{t('help.urlTitle')}</strong>
+                <p>{t('help.urlText')}</p>
               </div>
               <button type="button" className="btn help-ai-entry" onClick={() => setTab('ai')}>
                 <Sparkles size={16} />
-                AI에서 이 문서를 읽고 이어가기
+                {t('help.aiEntry')}
                 <ArrowRight size={15} />
               </button>
             </>
@@ -142,16 +139,20 @@ export default function HelpDialog({ anchor, onClose, onCopy, copying }: Props) 
             <>
               <p className="help-eyebrow">
                 <Sparkles size={15} />
-                AI 연동 · 선택 기능
+                {t('help.aiEyebrow')}
               </p>
-              <h3>문서 링크를 AI에게 건네세요</h3>
-              <p className="help-lead">
-                공유받은 문서를 AI가 읽고 함께 논의하거나, 대화에서 정리한 내용을 새 문서 링크로 만들 수 있습니다.
-              </p>
+              <h3>{t('help.aiTitle')}</h3>
+              <p className="help-lead">{t('help.aiLead')}</p>
               <section className="help-setup">
-                <h4>처음 한 번, AI에게 설치 요청</h4>
-                <p>아래 문구를 복사해 Codex나 Claude Code에 붙여넣으세요.</p>
-                <textarea id="ai-setup-prompt" aria-label="AI 설치 요청 문구" readOnly value={setupPrompt} rows={3} />
+                <h4>{t('help.setupTitle')}</h4>
+                <p>{t('help.setupText')}</p>
+                <textarea
+                  id="ai-setup-prompt"
+                  aria-label={t('help.setupLabel')}
+                  readOnly
+                  value={setupPrompt}
+                  rows={3}
+                />
                 <button
                   type="button"
                   className="btn"
@@ -160,34 +161,32 @@ export default function HelpDialog({ anchor, onClose, onCopy, copying }: Props) 
                   onClick={async () => setCopyStatus((await onCopy(setupPrompt)) ? 'copied' : 'error')}
                 >
                   {copyStatus === 'copied' ? <Check size={16} /> : <Copy size={16} />}
-                  {copying ? '복사 중...' : copyStatus === 'copied' ? '복사됨' : '설치 요청 복사'}
+                  {copying ? t('common.copying') : copyStatus === 'copied' ? t('common.copied') : t('help.copySetup')}
                 </button>
                 {copyStatus !== 'idle' && (
                   <p className="help-caption" role={copyStatus === 'error' ? 'alert' : 'status'}>
-                    {copyStatus === 'copied'
-                      ? 'AI 대화창에 붙여넣고 보내세요.'
-                      : '복사하지 못했습니다. 위 문구를 직접 선택해 복사해주세요.'}
+                    {copyStatus === 'copied' ? t('help.pasteSetup') : t('help.copyError')}
                   </p>
                 )}
               </section>
               <section className="help-examples">
-                <h4>설치 후에는 이렇게 요청하세요</h4>
+                <h4>{t('help.examples')}</h4>
                 <ul>
                   <li>
-                    <strong>문서 요약</strong>
-                    <p>“이 링크의 내용을 읽고 핵심만 요약해줘. [문서 링크]”</p>
+                    <strong>{t('help.summarize')}</strong>
+                    <p>{t('help.summarizePrompt')}</p>
                   </li>
                   <li>
-                    <strong>이어서 논의</strong>
-                    <p>“이 문서를 바탕으로 다음에 할 일을 함께 정리해줘. [문서 링크]”</p>
+                    <strong>{t('help.discuss')}</strong>
+                    <p>{t('help.discussPrompt')}</p>
                   </li>
                   <li>
-                    <strong>결과 공유</strong>
-                    <p>“방금 정리한 내용을 raw-md 링크로 만들어줘.”</p>
+                    <strong>{t('help.share')}</strong>
+                    <p>{t('help.sharePrompt')}</p>
                   </li>
                 </ul>
               </section>
-              <p className="help-caption">AI에 전달한 문서는 사용 중인 AI 서비스에서 처리됩니다.</p>
+              <p className="help-caption">{t('help.aiPrivacy')}</p>
             </>
           )}
         </div>

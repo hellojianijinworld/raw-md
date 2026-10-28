@@ -1,5 +1,6 @@
 import type { BrotliWasmType } from 'brotli-wasm'
 import LZString from 'lz-string'
+import { translate as t } from '../i18n/core'
 import { packHangul, unpackHangul } from './hangulCodec'
 import { decodeLegacyLz } from './legacyLz'
 
@@ -10,7 +11,7 @@ const MAX_TEXT_BYTES = 4 * 1024 * 1024
 export const MAX_HASH_LENGTH = MAX_TEXT_BYTES * 3
 const encoder = new TextEncoder()
 const decoder = new TextDecoder('utf-8', { fatal: true, ignoreBOM: true })
-const invalidLink = () => new Error('공유 링크가 잘렸거나 손상되었습니다. 원본 링크를 확인해주세요.')
+const invalidLink = () => new Error(t('error.invalidLink'))
 
 function checksum(bytes: Uint8Array): number {
   let hash = 0x811c9dc5
@@ -43,7 +44,7 @@ function frame(prefix: string, source: Uint8Array, compressed: Uint8Array): stri
 
 export function encodeMarkdown(markdown: string, brotli: BrotliEncoder): string {
   const source = encoder.encode(markdown)
-  if (source.length > MAX_TEXT_BYTES) throw new Error('공유할 수 있는 문서 크기는 최대 4MB입니다.')
+  if (source.length > MAX_TEXT_BYTES) throw new Error(t('error.maxSize'))
   let shortest = LZString.compressToEncodedURIComponent(markdown)
   // LZ-string preserves isolated UTF-16 surrogates that UTF-8 would replace.
   if (decoder.decode(source) !== markdown) return shortest
@@ -104,22 +105,22 @@ function decompressBounded(input: Uint8Array, limit: number, brotli: BrotliDecod
 
 export function decodeMarkdown(raw: string, brotli?: BrotliDecoder): string {
   if (!raw) return ''
-  if (raw.length > MAX_HASH_LENGTH) throw new Error('공유 링크가 너무 깁니다.')
+  if (raw.length > MAX_HASH_LENGTH) throw new Error(t('error.linkTooLong'))
   const hash = decodeURIComponent(raw)
   if (!hash.includes('.')) {
     const normalized = hash.replaceAll(' ', '+')
     const text = decodeLegacyLz(normalized, MAX_TEXT_BYTES)
-    if (encoder.encode(text).length > MAX_TEXT_BYTES) throw new Error('문서 크기가 4MB를 초과합니다.')
+    if (encoder.encode(text).length > MAX_TEXT_BYTES) throw new Error(t('error.sizeExceeded'))
     if (LZString.compressToEncodedURIComponent(text) !== normalized) throw invalidLink()
     return text
   }
-  if (!/^[bj]1\./.test(hash)) throw new Error('지원하지 않는 공유 링크 형식입니다.')
-  if (!brotli) throw new Error('압축기를 불러오지 못했습니다. 다시 시도해주세요.')
+  if (!/^[bj]1\./.test(hash)) throw new Error(t('error.unsupportedLink'))
+  if (!brotli) throw new Error(t('error.compressor'))
   const bytes = fromBase64(hash.slice(3))
   if (bytes.length < 9) throw invalidLink()
   const header = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength)
   const expectedLength = header.getUint32(0, true)
-  if (expectedLength > MAX_TEXT_BYTES) throw new Error('문서 크기가 4MB를 초과합니다.')
+  if (expectedLength > MAX_TEXT_BYTES) throw new Error(t('error.sizeExceeded'))
   const packed = hash.startsWith('j1.')
   const output = decompressBounded(bytes.subarray(8), expectedLength * (packed ? 2 : 1), brotli)
   const text = packed ? unpackHangul(output) : decoder.decode(output)

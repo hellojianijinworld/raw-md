@@ -1,10 +1,12 @@
 /// <reference lib="webworker" />
+import { setRuntimeLocale, translate as t } from '../i18n/core'
 import type { CompressionResult, CompressionTask } from '../utils/compression'
 import { decodeMarkdown, encodeMarkdown } from '../utils/urlCodec'
 
 const context = self as unknown as DedicatedWorkerGlobalScope
 
 context.onmessage = async ({ data }: MessageEvent<CompressionTask>) => {
+  setRuntimeLocale(data.locale)
   let response: CompressionResult
   try {
     const hash = data.action === 'decode' ? decodeURIComponent(data.value) : ''
@@ -22,7 +24,7 @@ context.onmessage = async ({ data }: MessageEvent<CompressionTask>) => {
     }
     response = { ok: true, value }
   } catch (error) {
-    response = { ok: false, error: error instanceof Error ? error.message : '공유 링크를 처리하지 못했습니다.' }
+    response = { ok: false, error: error instanceof Error ? error.message : t('error.processLink') }
   }
   context.postMessage(response)
 }

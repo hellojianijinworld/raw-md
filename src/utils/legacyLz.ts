@@ -1,3 +1,5 @@
+import { translate as t } from '../i18n/core'
+
 /*
 Adapted from lz-string (bounded output and dictionary growth).
 
@@ -25,7 +27,7 @@ SOFTWARE.
 */
 // Budgets are checked before growing strings or arrays.
 const URI_ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+-$'
-const invalid = () => new Error('공유 링크가 잘렸거나 문서 크기가 4MB를 초과합니다.')
+const invalid = () => new Error(t('error.legacyLink'))
 
 export function decodeLegacyLz(input: string | Uint8Array, maxCharacters = 4 * 1024 * 1024): string {
   const binary = typeof input !== 'string'

@@ -1,3 +1,5 @@
+import { translate as t } from '../i18n/core'
+
 const encoder = new TextEncoder()
 const decoder = new TextDecoder('utf-8', { fatal: true, ignoreBOM: true })
 
@@ -27,14 +29,14 @@ export function unpackHangul(bytes: Uint8Array): string {
       chars.push(String.fromCodePoint(first))
     } else if (first === 0xff) {
       const length = bytes[i++]
-      if (!(length >= 1 && length <= 4) || i + length > bytes.length) throw new Error('손상된 공유 링크입니다.')
+      if (!(length >= 1 && length <= 4) || i + length > bytes.length) throw new Error(t('error.damagedLink'))
       chars.push(decoder.decode(bytes.subarray(i, i + length)))
       i += length
     } else {
       const vowel = bytes[i++] - 0xa0
       const final = bytes[i++] - 0xc0
       if (!(first >= 0x80 && first <= 0x92 && vowel >= 0 && vowel < 21 && final >= 0 && final < 28)) {
-        throw new Error('손상된 공유 링크입니다.')
+        throw new Error(t('error.damagedLink'))
       }
       chars.push(String.fromCodePoint(0xac00 + (first - 0x80) * 588 + vowel * 28 + final))
     }

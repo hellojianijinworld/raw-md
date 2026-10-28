@@ -1,5 +1,7 @@
 import { FolderOpen } from 'lucide-react'
 import { useMediaQuery } from '../hooks/useMediaQuery'
+import { translate as t } from '../i18n/core'
+import { useI18n } from '../i18n/useI18n'
 import MarkdownViewer from './MarkdownViewer'
 
 interface MarkdownEditorProps {
@@ -9,6 +11,8 @@ interface MarkdownEditorProps {
 }
 
 export default function MarkdownEditor({ content, onChange, sectionLinksEnabled }: MarkdownEditorProps) {
+  useI18n()
+
   const isMobile = useMediaQuery('(max-width: 768px) and (orientation: portrait)')
 
   const handleFileUpload = () => {
@@ -36,14 +40,14 @@ export default function MarkdownEditor({ content, onChange, sectionLinksEnabled 
           <div className="editor-pane-header">
             <button type="button" className="btn btn-sm" onClick={handleFileUpload}>
               <FolderOpen size={14} />
-              <span>파일 열기</span>
+              <span>{t('common.openFile')}</span>
             </button>
           </div>
           <textarea
             className="editor-textarea"
             value={content}
             onChange={(e) => onChange(e.target.value)}
-            placeholder="여기에 마크다운을 입력하세요..."
+            placeholder={t('editor.placeholder')}
           />
         </div>
       </div>
@@ -57,14 +61,14 @@ export default function MarkdownEditor({ content, onChange, sectionLinksEnabled 
         <div className="editor-pane-header">
           <button type="button" className="btn btn-sm" onClick={handleFileUpload}>
             <FolderOpen size={14} />
-            <span>파일 열기</span>
+            <span>{t('common.openFile')}</span>
           </button>
         </div>
         <textarea
           className="editor-textarea"
           value={content}
           onChange={(e) => onChange(e.target.value)}
-          placeholder="여기에 마크다운을 입력하세요..."
+          placeholder={t('editor.placeholder')}
         />
       </div>
       <div className="preview-pane">

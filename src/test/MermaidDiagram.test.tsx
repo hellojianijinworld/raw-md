@@ -3,6 +3,7 @@ import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, it, vi } from 'vitest'
 import MermaidDiagram from '../components/MermaidDiagram'
+import { setLanguagePreference } from '../i18n/core'
 
 let host: HTMLDivElement
 let root: Root
@@ -41,4 +42,16 @@ it('keeps the latest document when diagram types change during loading', async (
   expect(host.textContent).toContain('최신 문서')
   expect(host.textContent).not.toContain('이전 문서')
   expect(host.querySelectorAll('svg')).toHaveLength(1)
+})
+
+it('localizes parse error summaries, including errors handled internally by Pele', async () => {
+  await act(() => root.render(<MermaidDiagram chart={'flowchart TD\n A[broken'} />))
+  await vi.waitFor(() =>
+    expect(host.querySelector('.pele-error')?.textContent).toContain('다이어그램을 표시하지 못했습니다.'),
+  )
+  await act(() => setLanguagePreference('en'))
+  await vi.waitFor(() =>
+    expect(host.querySelector('.pele-error')?.textContent).toContain('Could not render the diagram.'),
+  )
+  expect(host.querySelector('.pele-error')?.textContent).not.toContain('다이어그램을 표시하지 못했습니다.')
 })

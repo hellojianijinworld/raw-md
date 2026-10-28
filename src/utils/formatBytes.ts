@@ -1,3 +1,5 @@
+import { getLocale } from '../i18n/core'
+
 const UNITS = ['B', 'KB', 'MB', 'GB'] as const
 const UNIT_SIZE = 1000
 
@@ -8,5 +10,5 @@ export function formatBytes(bytes: number): string {
     value /= UNIT_SIZE
     unit++
   }
-  return `${value.toLocaleString('en-US', { maximumFractionDigits: 2 })} ${UNITS[unit]}`
+  return `${value.toLocaleString(getLocale(), { maximumFractionDigits: 2 })} ${UNITS[unit]}`
 }

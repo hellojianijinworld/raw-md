@@ -7,6 +7,8 @@ import rehypeKatex from 'rehype-katex'
 import rehypeSanitize from 'rehype-sanitize'
 import remarkGfm from 'remark-gfm'
 import remarkMath from 'remark-math'
+import { localizeMessage, translate as t } from '../i18n/core'
+import { useI18n } from '../i18n/useI18n'
 import {
   ANCHOR_LAYOUT_SETTLE_MS,
   DOCUMENT_TARGET_ATTRIBUTE,
@@ -38,6 +40,8 @@ const renderCodeBlock: Components['pre'] = ({ children, node, ...props }) => {
 }
 
 export default function MarkdownViewer({ content, sectionLinksEnabled = true }: MarkdownViewerProps) {
+  useI18n()
+
   const container = useRef<HTMLDivElement>(null)
   const [navigation, setNavigation] = useState(0)
   const lastNavigation = useRef(0)
@@ -73,7 +77,7 @@ export default function MarkdownViewer({ content, sectionLinksEnabled = true }: 
       ? root.querySelector<HTMLElement>(`[${HEADING_INDEX_ATTRIBUTE}="${fragment.heading}"]`)
       : undefined
     if (fragment.heading && !target) {
-      setNotice('이 문서에서 해당 섹션을 찾지 못했습니다.')
+      setNotice(t('viewer.missingSection'))
       return
     }
     const scroll = () => {
@@ -100,7 +104,7 @@ export default function MarkdownViewer({ content, sectionLinksEnabled = true }: 
     (event: MouseEvent<HTMLElement>, target: number | undefined) => {
       if (target === undefined) {
         event.preventDefault()
-        setNotice('이 문서에서 해당 제목을 찾지 못했습니다.')
+        setNotice(t('viewer.missingHeading'))
         return
       }
       if (canShare && !isPrimaryLinkClick(event)) return
@@ -165,11 +169,11 @@ export default function MarkdownViewer({ content, sectionLinksEnabled = true }: 
     <div className="markdown-body" ref={container}>
       {notice && (
         <p className="anchor-notice" role="status">
-          {notice}
+          {localizeMessage(notice)}
         </p>
       )}
       {!content ? (
-        <p style={{ color: 'var(--fgColor-muted)' }}>마크다운을 입력하면 여기에 렌더링됩니다.</p>
+        <p style={{ color: 'var(--fgColor-muted)' }}>{t('editor.preview')}</p>
       ) : (
         <ReactMarkdown
           remarkPlugins={[remarkGfm, remarkMath]}

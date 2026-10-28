@@ -1,3 +1,5 @@
+import { translate as t } from '../i18n/core'
+
 const MAX_DOCUMENT_STORAGE = 1_000_000_000
 const FALLBACK_DOCUMENT_STORAGE = 100_000_000
 const STORAGE_HEADROOM_RATIO = 0.8
@@ -57,7 +59,7 @@ function openDatabase(): Promise<IDBDatabase> {
     }
     request.onsuccess = () => resolve(request.result)
     request.onerror = () => reject(request.error)
-    request.onblocked = () => reject(new Error('다른 탭에서 문서함을 사용 중입니다.'))
+    request.onblocked = () => reject(new Error(t('storage.blocked')))
   })
 }
 
@@ -133,7 +135,7 @@ async function writeDocument(
         }
       }
       if (total > limit) {
-        failure = new Error('문서함 공간이 부족합니다. 문서를 다운로드하거나 보관을 해제해주세요.')
+        failure = new Error(t('storage.full'))
         tx.abort()
         return
       }

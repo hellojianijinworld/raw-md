@@ -1,4 +1,5 @@
 import LZString from 'lz-string'
+import { translate as t } from '../i18n/core'
 import { decodeLegacyLz } from './legacyLz'
 import {
   type BrotliDecoder,
@@ -12,10 +13,10 @@ import {
 
 // e1 fixes the KDF parameters; links cannot request attacker-controlled memory or work.
 const additionalData = new TextEncoder().encode('raw-md:e1:argon2id:65536:3:1:aes-256-gcm')
-const unlockError = () => new Error('비밀번호가 올바르지 않거나 링크가 손상되었습니다.')
+const unlockError = () => new Error(t('error.unlock'))
 
 async function deriveKey(password: string, salt: Uint8Array): Promise<CryptoKey> {
-  if (!password) throw new Error('비밀번호를 입력해주세요.')
+  if (!password) throw new Error(t('error.passwordRequired'))
   const { argon2id } = await import('hash-wasm')
   const bytes = await argon2id({
     password,
@@ -52,8 +53,8 @@ export async function encryptMarkdown(markdown: string, brotli: BrotliEncoder, p
 }
 
 export async function decryptMarkdown(hash: string, brotli: BrotliDecoder, password: string): Promise<string> {
-  if (hash.length > MAX_HASH_LENGTH) throw new Error('공유 링크가 너무 깁니다.')
-  if (!hash.startsWith('e1.')) throw new Error('지원하지 않는 공유 링크 형식입니다.')
+  if (hash.length > MAX_HASH_LENGTH) throw new Error(t('error.linkTooLong'))
+  if (!hash.startsWith('e1.')) throw new Error(t('error.unsupportedLink'))
   const envelope = fromBase64(hash.slice(3))
   if (envelope.length < 46) throw unlockError()
   const key = await deriveKey(password, envelope.subarray(0, 16))

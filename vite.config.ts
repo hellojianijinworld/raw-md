@@ -1,15 +1,16 @@
 import { execFileSync } from 'node:child_process'
 import react from '@vitejs/plugin-react'
-import { defineConfig, type UserConfig } from 'vite'
+import { defineConfig, type ViteUserConfig } from 'vitest/config'
 import { getReleaseInfo, releasesUrl } from './scripts/release-info'
 
 // https://vite.dev/config/
-export default defineConfig(async ({ command }): Promise<UserConfig> => {
+export default defineConfig(async ({ command }): Promise<ViteUserConfig> => {
   const release = command === 'build' ? await getReleaseInfo() : { version: '', url: releasesUrl }
   const commit =
     process.env.CF_PAGES_COMMIT_SHA || execFileSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8' }).trim()
   return {
     plugins: [react()],
+    test: { setupFiles: ['./src/test/setupLocale.ts'] },
     base: '/',
     worker: { format: 'es' },
     define: {

@@ -1,6 +1,8 @@
 import { Check, Copy, Eye, EyeOff, X } from 'lucide-react'
 import { type RefObject, useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
+import { translate as t } from '../i18n/core'
+import { useI18n } from '../i18n/useI18n'
 import { documentSecretInput } from '../utils/documentSecret'
 import { formatBytes } from '../utils/formatBytes'
 import { generateSharePassword, type ShareMode } from '../utils/password'
@@ -41,6 +43,8 @@ export default function SharePopover({
   onSaveDocument,
   onClose,
 }: Props) {
+  const { locale } = useI18n()
+
   const panel = useRef<HTMLDivElement>(null)
   const close = useRef<HTMLButtonElement>(null)
   const [showPassword, setShowPassword] = useState(false)
@@ -94,12 +98,12 @@ export default function SharePopover({
   return createPortal(
     <div ref={panel} id="share-popover" className="share-popover" role="dialog" aria-labelledby="share-heading">
       <div className="share-heading">
-        <h2 id="share-heading">링크 공유</h2>
+        <h2 id="share-heading">{t('share.title')}</h2>
         <button
           ref={close}
           type="button"
           className="btn btn-icon"
-          aria-label="닫기"
+          aria-label={t('common.close')}
           onClick={() => {
             anchor.current?.focus()
             onClose()
@@ -111,14 +115,18 @@ export default function SharePopover({
       <dl className="share-size">
         <div>
           <dt>
-            원문 용량 <span>UTF-8</span>
+            {t('share.sourceSize')}
+            <span>UTF-8</span>
           </dt>
-          <dd title={`${bytes.toLocaleString('en-US')} bytes`}>{formatBytes(bytes)}</dd>
+          <dd title={`${bytes.toLocaleString(locale)} B`}>{formatBytes(bytes)}</dd>
         </div>
         {linkLength !== undefined && (
           <div>
-            <dt>공유 링크 길이</dt>
-            <dd>{linkLength.toLocaleString('en-US')}자</dd>
+            <dt>{t('share.linkLength')}</dt>
+            <dd>
+              {linkLength.toLocaleString(locale)}
+              {t('share.characters')}
+            </dd>
           </div>
         )}
       </dl>
@@ -130,11 +138,11 @@ export default function SharePopover({
         }}
       >
         <fieldset className="share-options">
-          <legend>공유 방식</legend>
+          <legend>{t('share.mode')}</legend>
           {(
             [
-              ['plain', '그냥 공유', '링크가 있으면 누구나 열 수 있습니다.'],
-              ['protected', '직접 설정', '비밀번호로 보호합니다. 직접 입력하거나 자동 생성할 수 있습니다.'],
+              ['plain', t('share.plain'), t('share.plainDescription')],
+              ['protected', t('share.protected'), t('share.protectedDescription')],
             ] as const
           ).map(([value, title, description]) => (
             <label
@@ -159,7 +167,7 @@ export default function SharePopover({
         {protectedLink && (
           <div className="share-password">
             <div className="share-password-heading">
-              <label htmlFor="document-share-key">비밀번호</label>
+              <label htmlFor="document-share-key">{t('common.password')}</label>
             </div>
             <div className="password-field">
               <input
@@ -179,8 +187,8 @@ export default function SharePopover({
               <button
                 type="button"
                 className="password-visibility"
-                aria-label={showPassword ? '비밀번호 숨기기' : '비밀번호 표시'}
-                title={showPassword ? '비밀번호 숨기기' : '비밀번호 표시'}
+                aria-label={showPassword ? t('share.hidePassword') : t('share.showPassword')}
+                title={showPassword ? t('share.hidePassword') : t('share.showPassword')}
                 aria-controls="document-share-key"
                 aria-pressed={showPassword}
                 onClick={() => setShowPassword(!showPassword)}
@@ -199,7 +207,7 @@ export default function SharePopover({
                   setShowPassword(true)
                 }}
               >
-                {mode === 'secure' ? '다시 생성' : '강력한 암호 자동 생성'}
+                {mode === 'secure' ? t('share.regenerate') : t('share.generate')}
               </button>
               <button
                 type="button"
@@ -210,30 +218,24 @@ export default function SharePopover({
               >
                 {passwordCopyStatus === 'copied' ? <Check size={14} /> : <Copy size={14} />}
                 {copyingPassword
-                  ? '비밀번호 복사 중...'
+                  ? t('share.copyingPassword')
                   : passwordCopyStatus === 'copied'
-                    ? '비밀번호 복사됨'
-                    : '비밀번호 복사'}
+                    ? t('share.passwordCopied')
+                    : t('share.copyPassword')}
               </button>
             </div>
             {passwordCopyStatus !== 'idle' && (
               <p className="share-feedback" role={passwordCopyStatus === 'error' ? 'alert' : 'status'}>
-                {passwordCopyStatus === 'copied'
-                  ? '비밀번호를 복사했습니다.'
-                  : '비밀번호를 복사하지 못했습니다. 다시 시도해주세요.'}
+                {passwordCopyStatus === 'copied' ? t('share.passwordCopiedNotice') : t('share.passwordCopyError')}
               </p>
             )}
             <p id="password-hint" className="share-note">
-              비밀번호는 링크와 별도로 전달해주세요. 잊으면 복구할 수 없습니다.
+              {t('share.passwordHint')}
             </p>
           </div>
         )}
-        <p className="share-note">문서는 서버에 저장되지 않습니다.</p>
-        {protectedLink && (
-          <p className="share-note">
-            이전에 문서함에 저장한 일반 문서는 암호화되지 않습니다. 필요하면 문서함에서 삭제해주세요.
-          </p>
-        )}
+        <p className="share-note">{t('common.noServer')}</p>
+        {protectedLink && <p className="share-note">{t('share.plainCopies')}</p>}
         {protectedLink && (
           <button
             type="button"
@@ -241,7 +243,7 @@ export default function SharePopover({
             disabled={busy || copyingPassword || !password}
             onClick={onSaveDocument}
           >
-            {savingDocument ? '암호화 중...' : documentSaved ? '문서함에 저장됨' : '암호화해 문서함에 저장'}
+            {savingDocument ? t('share.encrypting') : documentSaved ? t('share.saved') : t('share.encryptSave')}
           </button>
         )}
         <button
@@ -251,15 +253,15 @@ export default function SharePopover({
           aria-busy={busy}
         >
           {status === 'copied' ? <Check size={16} /> : <Copy size={16} />}
-          {busy ? '만드는 중...' : status === 'copied' ? '복사됨' : '공유 링크 복사하기'}
+          {busy ? t('share.preparing') : status === 'copied' ? t('common.copied') : t('share.copyLink')}
         </button>
         <p className="share-feedback" role={status === 'error' ? 'alert' : 'status'}>
           {status === 'error'
-            ? '링크를 만들거나 복사하지 못했습니다. 다시 시도해주세요.'
+            ? t('share.copyError')
             : status === 'copied'
-              ? '링크를 복사했습니다.'
+              ? t('share.copiedNotice')
               : busy
-                ? '문서를 압축하고 링크를 준비하고 있습니다.'
+                ? t('share.compressing')
                 : ''}
         </p>
       </form>

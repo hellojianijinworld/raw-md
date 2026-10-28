@@ -1,5 +1,7 @@
 import { LockKeyhole } from 'lucide-react'
 import { useState } from 'react'
+import { localizeMessage, translate as t } from '../i18n/core'
+import { useI18n } from '../i18n/useI18n'
 import { documentSecretInput } from '../utils/documentSecret'
 
 export default function UnlockDocument({
@@ -11,6 +13,8 @@ export default function UnlockDocument({
   error: string
   onUnlock: (password: string) => void
 }) {
+  useI18n()
+
   const [password, setPassword] = useState('')
   return (
     <div className="unlock-container">
@@ -23,9 +27,9 @@ export default function UnlockDocument({
         }}
       >
         <LockKeyhole size={28} aria-hidden="true" />
-        <h2>비밀번호로 보호된 문서</h2>
-        <p className="share-note">공유한 사람이 알려준 비밀번호를 입력해주세요.</p>
-        <label htmlFor="document-unlock-key">비밀번호</label>
+        <h2>{t('document.lockedTitle')}</h2>
+        <p className="share-note">{t('document.unlockHint')}</p>
+        <label htmlFor="document-unlock-key">{t('common.password')}</label>
         <input
           id="document-unlock-key"
           name="document-unlock-key"
@@ -38,16 +42,16 @@ export default function UnlockDocument({
           aria-describedby={error ? 'unlock-error' : undefined}
         />
         <button type="submit" className="btn share-copy" disabled={busy || !password} aria-busy={busy}>
-          {busy ? '문서를 여는 중...' : '문서 열기'}
+          {busy ? t('document.unlocking') : t('document.unlock')}
         </button>
         {busy && (
           <p className="share-note" role="status">
-            비밀번호를 확인하고 문서를 복원하고 있습니다.
+            {t('document.restoring')}
           </p>
         )}
         {error && (
           <p id="unlock-error" className="share-feedback" role="alert">
-            {error}
+            {localizeMessage(error)}
           </p>
         )}
       </form>

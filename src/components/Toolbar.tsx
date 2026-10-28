@@ -1,6 +1,8 @@
 import { CircleHelp, Eye, FolderOpen, GitPullRequest, Link2, Menu, Pencil } from 'lucide-react'
 import { type RefObject, useEffect, useRef, useState } from 'react'
 import { useScrollToolbar } from '../hooks/useScrollToolbar'
+import { translate as t } from '../i18n/core'
+import { useI18n } from '../i18n/useI18n'
 
 export type CopyStatus = 'idle' | 'compressing' | 'copied' | 'error'
 
@@ -33,6 +35,8 @@ export default function Toolbar({
   onThemeChange,
   disabled,
 }: ToolbarProps) {
+  const { languagePreference, setLanguagePreference } = useI18n()
+
   const toolbarVisible = useScrollToolbar()
   const [menuOpen, setMenuOpen] = useState(false)
   const menu = useRef<HTMLDivElement>(null)
@@ -61,18 +65,22 @@ export default function Toolbar({
     <div className={`toolbar${toolbarVisible ? '' : ' toolbar-hidden'}`}>
       <div className="toolbar-left">
         <h1 className="logo">
-          <a href={window.location.pathname} aria-label="raw-md 홈">
+          <a href={window.location.pathname} aria-label={t('common.home')}>
             <span className="brand-mark" aria-hidden="true" />
             <span>raw-md</span>
           </a>
         </h1>
       </div>
       <div className="toolbar-actions">
-        {isEditing && isDirty && <span className="toolbar-hint toolbar-hint-dirty">수정됨</span>}
+        {isEditing && isDirty && (
+          <span className="toolbar-hint toolbar-hint-dirty" data-hint={t('toolbar.recopy')}>
+            {t('toolbar.modified')}
+          </span>
+        )}
         <button
           type="button"
           className="btn"
-          aria-label="링크"
+          aria-label={t('common.link')}
           ref={shareButtonRef}
           onClick={() => {
             setMenuOpen(false)
@@ -84,12 +92,12 @@ export default function Toolbar({
           aria-haspopup="dialog"
         >
           <Link2 size={16} />
-          <span className="btn-label">링크</span>
+          <span className="btn-label">{t('common.link')}</span>
         </button>
         <button
           type="button"
           className="btn"
-          aria-label={isEditing ? '뷰어' : '수정'}
+          aria-label={isEditing ? t('common.view') : t('common.edit')}
           onClick={() => {
             setMenuOpen(false)
             onToggleEdit()
@@ -97,14 +105,14 @@ export default function Toolbar({
           disabled={disabled}
         >
           {isEditing ? <Eye size={16} /> : <Pencil size={16} />}
-          <span className="btn-label">{isEditing ? '뷰어' : '수정'}</span>
+          <span className="btn-label">{isEditing ? t('common.view') : t('common.edit')}</span>
         </button>
         <div ref={menu} className="toolbar-menu">
           <button
             ref={helpButtonRef}
             type="button"
             className="btn btn-icon"
-            aria-label="메뉴"
+            aria-label={t('common.menu')}
             aria-expanded={menuOpen}
             aria-controls={menuOpen ? 'app-menu' : undefined}
             onClick={() => setMenuOpen(!menuOpen)}
@@ -112,18 +120,19 @@ export default function Toolbar({
             <Menu size={18} />
           </button>
           {menuOpen && (
-            <section id="app-menu" className="app-menu" aria-label="도움말 및 설정">
+            <section id="app-menu" className="app-menu" aria-label={t('toolbar.menuLabel')}>
               <button
                 type="button"
                 className="app-menu-help"
-                aria-label="내 문서함"
+                aria-label={t('common.library')}
                 aria-keyshortcuts="Meta+K Control+K"
                 onClick={() => {
                   setMenuOpen(false)
                   onOpenLibrary()
                 }}
               >
-                <FolderOpen size={16} />내 문서함
+                <FolderOpen size={16} />
+                {t('common.library')}
                 <kbd className="menu-shortcut">⌘K / Ctrl+K</kbd>
               </button>
               <button
@@ -135,7 +144,7 @@ export default function Toolbar({
                 }}
               >
                 <CircleHelp size={16} />
-                도움말
+                {t('common.help')}
               </button>
               <a
                 className="app-menu-help"
@@ -144,15 +153,15 @@ export default function Toolbar({
                 rel="noopener noreferrer"
               >
                 <GitPullRequest size={16} />
-                GitHub에서 기여하기
+                {t('toolbar.contribute')}
               </a>
               <fieldset>
-                <legend>설정 · 화면 테마</legend>
+                <legend>{t('toolbar.theme')}</legend>
                 {(
                   [
-                    ['auto', '시스템 설정'],
-                    ['light', '라이트'],
-                    ['dark', '다크'],
+                    ['auto', t('toolbar.system')],
+                    ['light', t('toolbar.light')],
+                    ['dark', t('toolbar.dark')],
                   ] as const
                 ).map(([value, label]) => (
                   <label key={value}>
@@ -167,16 +176,37 @@ export default function Toolbar({
                   </label>
                 ))}
               </fieldset>
+              <fieldset>
+                <legend>{t('toolbar.language')}</legend>
+                {(
+                  [
+                    ['auto', t('toolbar.browserLanguage')],
+                    ['ko', t('language.ko')],
+                    ['en', t('language.en')],
+                  ] as const
+                ).map(([value, label]) => (
+                  <label key={value}>
+                    <input
+                      type="radio"
+                      name="language"
+                      value={value}
+                      checked={languagePreference === value}
+                      onChange={() => setLanguagePreference(value)}
+                    />
+                    {label}
+                  </label>
+                ))}
+              </fieldset>
               <div className="app-menu-version">
                 <a
                   href={import.meta.env.VITE_RELEASE_URL || 'https://github.com/hellojianijinworld/raw-md/releases'}
                   target="_blank"
                   rel="noopener noreferrer"
-                  title="배포 시점의 최신 GitHub 정식 릴리즈"
+                  title={t('toolbar.releaseHint')}
                 >
                   {import.meta.env.VITE_RELEASE_VERSION
-                    ? `기준 릴리즈 ${import.meta.env.VITE_RELEASE_VERSION}`
-                    : '등록된 릴리즈 없음'}
+                    ? t('toolbar.release', { version: import.meta.env.VITE_RELEASE_VERSION })
+                    : t('toolbar.noRelease')}
                 </a>
                 {import.meta.env.VITE_BUILD_COMMIT && (
                   <a
@@ -184,7 +214,7 @@ export default function Toolbar({
                     target="_blank"
                     rel="noopener noreferrer"
                   >
-                    빌드 {import.meta.env.VITE_BUILD_COMMIT.slice(0, 7)}
+                    {t('toolbar.build', { commit: import.meta.env.VITE_BUILD_COMMIT.slice(0, 7) })}
                   </a>
                 )}
               </div>

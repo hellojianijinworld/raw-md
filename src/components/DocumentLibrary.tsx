@@ -1,6 +1,8 @@
 import { Bookmark, Download, FolderOpen, Trash2, X } from 'lucide-react'
 import { type RefObject, useCallback, useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
+import { localizeMessage, translate as t } from '../i18n/core'
+import { useI18n } from '../i18n/useI18n'
 import {
   deleteDocument,
   documentSize,
@@ -11,6 +13,11 @@ import {
   storageBudget,
 } from '../utils/documentStorage'
 import { formatBytes } from '../utils/formatBytes'
+import { isEncryptedHash } from '../utils/url'
+
+function displayTitle(item: StoredDocument): string {
+  return item.kind === 'link' && isEncryptedHash(item.value) ? t('document.lockedTitle') : item.title
+}
 
 export default function DocumentLibrary({
   onClose,
@@ -23,6 +30,8 @@ export default function DocumentLibrary({
   returnFocus: RefObject<HTMLElement | null>
   onDownload: (doc: StoredDocument) => Promise<boolean>
 }) {
+  const { locale } = useI18n()
+
   const [items, setItems] = useState<StoredDocument[]>([])
   const [query, setQuery] = useState('')
   const [error, setError] = useState('')
@@ -44,7 +53,7 @@ export default function DocumentLibrary({
       const used = documents.reduce((sum, doc) => sum + documentSize(doc), 0)
       setLimit(storageBudget(used, await readStorageEstimate()).limit)
     } catch {
-      setError('문서함을 열지 못했습니다. 브라우저 저장소 설정을 확인해주세요.')
+      setError(t('library.openError'))
     }
   }, [])
   useEffect(() => {
@@ -75,7 +84,7 @@ export default function DocumentLibrary({
     }
   }, [onClose, refresh, returnFocus])
   const filtered = items.filter((item) =>
-    `${item.title} ${item.kind === 'draft' ? item.value : (item.content ?? '')}`
+    `${displayTitle(item)} ${item.kind === 'draft' ? item.value : (item.content ?? '')}`
       .toLowerCase()
       .includes(query.toLowerCase()),
   )
@@ -92,24 +101,25 @@ export default function DocumentLibrary({
         <header className="help-header">
           <div>
             <FolderOpen size={19} />
-            <h2 id="library-title">내 문서함</h2>
+            <h2 id="library-title">{t('common.library')}</h2>
           </div>
-          <button ref={close} type="button" className="btn btn-icon" aria-label="문서함 닫기" onClick={onClose}>
+          <button ref={close} type="button" className="btn btn-icon" aria-label={t('library.close')} onClick={onClose}>
             <X size={18} />
           </button>
         </header>
         <div className="library-content">
           <p>
-            문서함 {formatBytes(usage)}
+            {t('library.name')}
+            {formatBytes(usage)}
             {limit !== undefined ? ` / ${formatBytes(limit)}` : ''}
           </p>
-          <p className="share-note">이 브라우저에 저장됩니다. 필요한 문서는 다운로드해 보관하세요.</p>
-          {notice && <p role="status">{notice}</p>}
+          <p className="share-note">{t('library.note')}</p>
+          {notice && <p role="status">{localizeMessage(notice)}</p>}
           <input
             ref={search}
             className="library-search"
-            aria-label="문서 검색"
-            placeholder="문서 검색"
+            aria-label={t('library.search')}
+            placeholder={t('library.search')}
             value={query}
             onChange={(event) => setQuery(event.target.value)}
             onKeyDown={(event) => {
@@ -121,10 +131,8 @@ export default function DocumentLibrary({
               else first?.focus()
             }}
           />
-          {error && <p role="alert">{error}</p>}
-          {!filtered.length && (
-            <p className="share-note">{query ? '검색 결과가 없습니다.' : '저장된 문서가 없습니다.'}</p>
-          )}
+          {error && <p role="alert">{localizeMessage(error)}</p>}
+          {!filtered.length && <p className="share-note">{query ? t('library.noResults') : t('library.empty')}</p>}
           <ul
             className="library-list"
             onKeyDown={(event) => {
@@ -140,25 +148,25 @@ export default function DocumentLibrary({
             {filtered.map((item) => (
               <li key={item.id}>
                 <button type="button" className="library-open" onClick={() => onOpen(item)}>
-                  <strong>{item.title}</strong>
+                  <strong>{displayTitle(item)}</strong>
                   <span>
-                    {new Date(item.updatedAt).toLocaleString('ko-KR')} · {formatBytes(documentSize(item))}
+                    {new Date(item.updatedAt).toLocaleString(locale)} · {formatBytes(documentSize(item))}
                   </span>
                 </button>
                 <button
                   type="button"
                   className="btn btn-icon"
-                  aria-label={`${item.title} 다운로드`}
-                  title="Markdown 파일로 다운로드"
+                  aria-label={t('library.download', { title: displayTitle(item) })}
+                  title={t('library.downloadHint')}
                   disabled={downloading !== null}
                   onClick={() => {
                     setDownloading(item.id)
                     setError('')
                     void onDownload(item)
                       .then((saved) => {
-                        if (saved) setNotice('다운로드를 시작했습니다.')
+                        if (saved) setNotice(t('library.downloadStarted'))
                       })
-                      .catch(() => setError('문서를 다운로드하지 못했습니다. 다시 시도해주세요.'))
+                      .catch(() => setError(t('library.downloadError')))
                       .finally(() => setDownloading(null))
                   }}
                 >
@@ -167,12 +175,15 @@ export default function DocumentLibrary({
                 <button
                   type="button"
                   className="btn btn-icon"
-                  aria-label={`${item.title} ${item.pinned ? '보관 해제' : '보관하기'}`}
+                  aria-label={t('library.pinLabel', {
+                    title: displayTitle(item),
+                    action: item.pinned ? t('library.unpin') : t('library.pin'),
+                  })}
                   aria-pressed={item.pinned}
                   onClick={() => {
                     void setDocumentPinned(item.id, !item.pinned)
                       .then(refresh)
-                      .catch(() => setError('보관 상태를 변경하지 못했습니다.'))
+                      .catch(() => setError(t('library.pinError')))
                   }}
                 >
                   <Bookmark size={16} fill={item.pinned ? '#e3b341' : 'none'} />
@@ -180,12 +191,12 @@ export default function DocumentLibrary({
                 <button
                   type="button"
                   className="btn btn-icon"
-                  aria-label={`${item.title} 삭제`}
+                  aria-label={t('library.delete', { title: displayTitle(item) })}
                   onClick={() => {
-                    if (window.confirm('이 문서를 문서함에서 삭제할까요?'))
+                    if (window.confirm(t('library.deleteConfirm')))
                       void deleteDocument(item.id)
                         .then(refresh)
-                        .catch(() => setError('문서를 삭제하지 못했습니다.'))
+                        .catch(() => setError(t('library.deleteError')))
                   }}
                 >
                   <Trash2 size={16} />
@@ -193,9 +204,7 @@ export default function DocumentLibrary({
               </li>
             ))}
           </ul>
-          <p className="share-note library-cleanup-note">
-            공간이 부족하면 목록 아래쪽의 오래된 문서부터 자동 삭제될 수 있습니다. 보관한 문서는 제외됩니다.
-          </p>
+          <p className="share-note library-cleanup-note">{t('library.cleanupNote')}</p>
         </div>
       </div>
     </div>,

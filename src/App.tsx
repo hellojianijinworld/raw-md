@@ -7,6 +7,8 @@ import SharePopover from './components/SharePopover'
 import Toolbar, { type CopyStatus } from './components/Toolbar'
 import UnlockDocument from './components/UnlockDocument'
 import { useTheme } from './hooks/useTheme'
+import { localizedError, localizeMessage, translate as t } from './i18n/core'
+import { useI18n } from './i18n/useI18n'
 import { runCompressionTask } from './utils/compression'
 import {
   listDocuments,
@@ -28,6 +30,11 @@ import {
 } from './utils/url'
 
 function App() {
+  const { locale } = useI18n()
+  useEffect(() => {
+    document.documentElement.lang = locale
+  }, [locale])
+
   const [markdown, setMarkdown] = useState('')
   const [editMode, setEditMode] = useState<boolean>(() => isEditMode())
   const [copyStatus, setCopyStatus] = useState<CopyStatus>('idle')
@@ -88,12 +95,12 @@ function App() {
     if (!tabIdRef.current) tabIdRef.current = crypto.randomUUID()
     const tabId = tabIdRef.current
     saveQueueRef.current = saveQueueRef.current.catch(() => {}).then(() => setActiveDocument(tabId, id))
-    void saveQueueRef.current.catch(() => setStorageError('문서함 상태를 확인하지 못했습니다.'))
+    void saveQueueRef.current.catch(() => setStorageError(t('storage.stateError')))
   }, [])
 
   const enqueueSave = useCallback((doc: StoredDocument) => {
     if (typeof indexedDB === 'undefined') {
-      setStorageError('문서함을 사용할 수 없습니다. 현재 내용을 파일이나 링크로 보관해주세요.')
+      setStorageError(t('storage.unavailable'))
       return
     }
     pendingWritesRef.current++
@@ -111,7 +118,7 @@ function App() {
       () => {
         pendingWritesRef.current--
         failedSaveIdsRef.current.add(doc.id)
-        setStorageError('문서함에 저장하지 못했습니다. 현재 내용을 파일이나 링크로 보관해주세요.')
+        setStorageError(t('storage.saveError'))
       },
     )
   }, [])
@@ -209,13 +216,13 @@ function App() {
                   kind: 'link',
                   value: payload,
                   content: encrypted ? undefined : content,
-                  title: encrypted ? '비밀번호로 보호된 문서' : documentTitle(content),
+                  title: encrypted ? t('document.lockedTitle') : documentTitle(content),
                   updatedAt: Date.now(),
                   pinned: existing?.pinned ?? false,
                 },
           )
         })
-        .catch(() => setStorageError('문서함에 저장하지 못했습니다. 현재 내용을 파일이나 링크로 보관해주세요.'))
+        .catch(() => setStorageError(t('storage.saveError')))
     },
     [enqueueSave, updateActiveDocument],
   )
@@ -243,7 +250,7 @@ function App() {
                   activeDocumentRef.current = id
                 else if (id) await setActiveDocument(tabId, activeDocumentRef.current)
               })
-            void saveQueueRef.current.catch(() => setStorageError('문서함 상태를 확인하지 못했습니다.'))
+            void saveQueueRef.current.catch(() => setStorageError(t('storage.stateError')))
           }
           return
         }
@@ -274,14 +281,14 @@ function App() {
           pendingDownloadPayloadRef.current = null
           try {
             downloadMarkdown(content, documentTitle(content))
-            setDownloadNotice('다운로드를 시작했습니다.')
+            setDownloadNotice(t('library.downloadStarted'))
           } catch {
-            setDownloadNotice('문서를 다운로드하지 못했습니다. 다시 시도해주세요.')
+            setDownloadNotice(t('library.downloadError'))
           }
         }
       } catch (error) {
         if (controller.signal.aborted) return
-        setLoadError(error instanceof Error ? error.message : '공유 링크를 확인해주세요.')
+        setLoadError(localizedError(error, encrypted ? 'error.unlock' : 'document.checkLink'))
         setLoadState(encrypted ? 'locked' : 'error')
       } finally {
         if (!controller.signal.aborted) setUnlocking(false)
@@ -460,7 +467,7 @@ function App() {
 
   const handleSaveProtected = async () => {
     if (savingDocument || copyControllerRef.current || !password || typeof indexedDB === 'undefined') {
-      if (typeof indexedDB === 'undefined') setStorageError('문서함을 사용할 수 없습니다. 링크나 파일로 보관해주세요.')
+      if (typeof indexedDB === 'undefined') setStorageError(t('storage.unavailableShort'))
       return
     }
     const revision = revisionRef.current
@@ -472,7 +479,7 @@ function App() {
       const payload = parseShareFragment(new URL(url).hash).payload
       const id = crypto.randomUUID()
       await putDocument(
-        { id, kind: 'link', value: payload, title: '비밀번호로 보호된 문서', updatedAt: Date.now(), pinned: false },
+        { id, kind: 'link', value: payload, title: t('document.lockedTitle'), updatedAt: Date.now(), pinned: false },
         { activeIds: activeDocumentRef.current ? [activeDocumentRef.current, id] : [id] },
       )
       setStorageError('')
@@ -487,18 +494,14 @@ function App() {
         setDocumentSaved(true)
       }
     } catch {
-      setStorageError('암호화된 문서를 저장하지 못했습니다. 현재 내용을 파일이나 링크로 보관해주세요.')
+      setStorageError(t('storage.encryptedSaveError'))
     } finally {
       setSavingDocument(false)
     }
   }
 
   const openStoredDocument = (doc: StoredDocument): boolean => {
-    if (
-      privateDraftPending &&
-      !window.confirm('비밀번호 문서의 저장하지 않은 수정 내용이 사라집니다. 다른 문서를 열까요?')
-    )
-      return false
+    if (privateDraftPending && !window.confirm(t('document.discardConfirm'))) return false
     const payload = doc.kind === 'draft' ? encodeMarkdownToHash(doc.value) : doc.value
     if (payload === documentPayloadRef.current) {
       selectedDocumentRef.current = null
@@ -610,30 +613,28 @@ function App() {
         />
       )}
       {loadState === 'ready' && privateDraftPending && (
-        <p className="private-draft-note">
-          변경 사항이 링크에 반영되지 않았습니다. 보관하려면 링크를 다시 복사해주세요.
-        </p>
+        <p className="private-draft-note">{t('document.privateDraft')}</p>
       )}
       {storageError && (
         <p className="private-draft-note" role="alert">
-          {storageError}
+          {localizeMessage(storageError)}
         </p>
       )}
       {downloadNotice && (
         <p className="private-draft-note" role="status">
-          {downloadNotice}
+          {localizeMessage(downloadNotice)}
         </p>
       )}
       {loadState === 'locked' ? (
         <UnlockDocument key={documentPayloadRef.current} busy={unlocking} error={loadError} onUnlock={loadDocument} />
       ) : loadState === 'loading' ? (
         <div className="document-status" role="status">
-          문서를 불러오는 중...
+          {t('document.loading')}
         </div>
       ) : loadState === 'error' ? (
         <div className="document-status" role="alert">
-          <p>문서를 열지 못했습니다.</p>
-          <p>{loadError}</p>
+          <p>{t('document.loadError')}</p>
+          <p>{localizeMessage(loadError)}</p>
         </div>
       ) : editMode ? (
         <MarkdownEditor content={markdown} onChange={handleMarkdownChange} sectionLinksEnabled={!privateDraftPending} />
@@ -648,7 +649,7 @@ function App() {
 
 function documentTitle(markdown: string): string {
   const heading = markdown.match(/^\s{0,3}#{1,6}\s+(.+?)\s*#*\s*$/m)?.[1]
-  return (heading || markdown.trim().split('\n')[0] || '제목 없는 문서').slice(0, 80)
+  return (heading || markdown.trim().split('\n')[0] || t('common.untitled')).slice(0, 80)
 }
 
 export default App

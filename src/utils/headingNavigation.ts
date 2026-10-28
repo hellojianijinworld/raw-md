@@ -1,5 +1,6 @@
 import GithubSlugger from 'github-slugger'
 import type { Element, Root, RootContent } from 'hast'
+import { translate as t } from '../i18n/core'
 import { SANITIZE_ID_PREFIX } from './sanitize'
 import { formatShareFragment } from './shareFragment'
 
@@ -84,7 +85,10 @@ export function rehypeHeadingNavigation(options: { payload: string; base: string
       const link: Element = {
         type: 'element',
         tagName: 'a',
-        properties: { className: ['heading-link'], 'aria-label': `${headingText(node)} 섹션 링크` },
+        properties: {
+          className: ['heading-link'],
+          'aria-label': t('viewer.sectionLink', { title: headingText(node) }),
+        },
         children: [{ type: 'text', value: '#' }],
       }
       decorate(link, offset + 1)
