@@ -83,7 +83,7 @@ AI 연동은 **문서 링크를 읽고 대화를 이어가거나, 정리한 결�
 
 ## 함께 개선해요
 
-도움이 되었다면 [GitHub에서 Star로 응원해주세요](https://github.com/hellojianijinworld/raw-md). 사용 중 불편한 점이나 아이디어는 [이슈](https://github.com/hellojianijinworld/raw-md/issues)로 알려주세요. 오타 수정과 예시 추가도 환영합니다.
+사용 중 불편한 점이나 아이디어는 [이슈](https://github.com/hellojianijinworld/raw-md/issues)로 알려주세요. 오타 수정과 예시 추가를 비롯한 [GitHub 기여](CONTRIBUTING.md)도 환영합니다.
 
 개발과 PR 절차는 [기여 안내](CONTRIBUTING.md), 문서 저장·비밀번호 보호는 [보안과 개인정보](SECURITY.md), 직접 링크를 생성·복원하는 방법은 [CLI 안내](docs/CLI.md)에 모았습니다.
 

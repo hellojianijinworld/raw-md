@@ -1,4 +1,4 @@
-import { CircleHelp, Eye, Link2, Menu, Pencil, Star } from 'lucide-react'
+import { CircleHelp, Eye, GitPullRequest, Link2, Menu, Pencil } from 'lucide-react'
 import { type RefObject, useEffect, useRef, useState } from 'react'
 import { useScrollToolbar } from '../hooks/useScrollToolbar'
 
@@ -124,12 +124,12 @@ export default function Toolbar({
               </button>
               <a
                 className="app-menu-help"
-                href="https://github.com/hellojianijinworld/raw-md"
+                href="https://github.com/hellojianijinworld/raw-md/blob/main/CONTRIBUTING.md"
                 target="_blank"
                 rel="noopener noreferrer"
               >
-                <Star size={16} />
-                GitHub에 Star
+                <GitPullRequest size={16} />
+                GitHub에서 기여하기
               </a>
               <fieldset>
                 <legend>설정 · 화면 테마</legend>
