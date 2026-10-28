@@ -1,5 +1,5 @@
 import type { Element } from 'hast'
-import { type MouseEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { type MouseEvent, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import type { Components } from 'react-markdown'
 import ReactMarkdown from 'react-markdown'
 import rehypeHighlight from 'rehype-highlight'
@@ -39,6 +39,13 @@ const renderCodeBlock: Components['pre'] = ({ children, node, ...props }) => {
   return <pre {...props}>{children}</pre>
 }
 
+const renderTable: Components['table'] = ({ children, node: _node, ...props }) => (
+  // biome-ignore lint/a11y/noNoninteractiveTabindex: Overflow needs keyboard scrolling in browsers that do not focus scroll containers.
+  <section className="markdown-table" aria-label={t('viewer.table')} tabIndex={0}>
+    <table {...props}>{children}</table>
+  </section>
+)
+
 export default function MarkdownViewer({ content, sectionLinksEnabled = true }: MarkdownViewerProps) {
   useI18n()
 
@@ -54,6 +61,22 @@ export default function MarkdownViewer({ content, sectionLinksEnabled = true }: 
   }
   const canShare = sectionLinksEnabled && !!fragment.payload
   const base = typeof window === 'undefined' ? '' : window.location.origin + window.location.pathname
+
+  // Measure intrinsic table widths before paint; CSS caps the document at the available pane width.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: Replaced Markdown creates new table elements to observe.
+  useLayoutEffect(() => {
+    const root = container.current
+    if (!root) return
+    const tables = [...root.querySelectorAll<HTMLTableElement>(':scope > .markdown-table > table')]
+    const update = () => {
+      const width = tables.reduce((largest, table) => Math.max(largest, table.getBoundingClientRect().width), 0)
+      root.style.setProperty('--document-table-width', `${Math.ceil(width)}px`)
+    }
+    update()
+    const observer = typeof ResizeObserver === 'undefined' ? undefined : new ResizeObserver(update)
+    for (const table of tables) observer?.observe(table)
+    return () => observer?.disconnect()
+  }, [content])
 
   useEffect(() => {
     const navigate = () => setNavigation((value) => value + 1)
@@ -127,6 +150,7 @@ export default function MarkdownViewer({ content, sectionLinksEnabled = true }: 
   const components = useMemo<Components>(
     () => ({
       pre: renderCodeBlock,
+      table: renderTable,
       a({ children, node, ...props }) {
         const properties = (node as Element | undefined)?.properties
         if (!properties?.[HEADING_LINK_ATTRIBUTE]) return <a {...props}>{children}</a>

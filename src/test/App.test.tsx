@@ -458,6 +458,8 @@ it('toggles optional protection and generates or edits passwords without exposin
 it('selects explicit themes from the hamburger settings and keeps help accessible', async () => {
   await act(() => root.render(<App />))
   await act(() => document.querySelector<HTMLButtonElement>('[aria-label="메뉴"]')!.click())
+  expect(document.querySelector('#app-menu input')).toBeNull()
+  await act(() => button('환경설정').click())
   expect(document.querySelector('#app-menu')?.textContent).toContain('시스템 설정')
   expect(document.querySelector('.app-menu-version a')?.textContent).toBe('등록된 릴리즈 없음')
   expect(document.querySelector('.app-menu-version a')?.getAttribute('href')).toBe(
@@ -468,9 +470,26 @@ it('selects explicit themes from the hamburger settings and keeps help accessibl
     expect(localStorage.getItem('raw-md-color-mode')).toBe(mode)
     expect(document.documentElement.getAttribute('data-color-mode')).toBe(mode === 'dark' ? 'dark' : 'light')
   }
+  await act(() => document.querySelector<HTMLButtonElement>('[aria-label="메뉴로 돌아가기"]')!.click())
+  expect(document.querySelector('#app-menu input')).toBeNull()
+  expect(document.activeElement?.textContent).toBe('환경설정')
   await act(() => button('도움말').click())
   expect(document.querySelector('#app-menu')).toBeNull()
   expect(document.querySelector('[role="dialog"]')?.textContent).toContain('웹에서 바로 사용하세요')
+})
+
+it('changes language within preferences and reopens the compact main menu', async () => {
+  await act(() => root.render(<App />))
+  await act(() => document.querySelector<HTMLButtonElement>('[aria-label="메뉴"]')!.click())
+  await act(() => button('환경설정').click())
+  await act(() => document.querySelector<HTMLInputElement>('input[name="language"][value="en"]')!.click())
+  expect(document.documentElement.lang).toBe('en')
+  expect(document.querySelector('#app-menu')?.textContent).toContain('Appearance')
+  await act(() => document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true })))
+  expect(document.querySelector('#app-menu')).toBeNull()
+  await act(() => document.querySelector<HTMLButtonElement>('[aria-label="Menu"]')!.click())
+  expect(document.querySelector('#app-menu [aria-label="Documents"]')).not.toBeNull()
+  expect(document.querySelector('#app-menu input')).toBeNull()
 })
 
 it('navigates headings and history without decoding the document again', async () => {

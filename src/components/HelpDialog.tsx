@@ -51,7 +51,13 @@ export default function HelpDialog({ anchor, onClose, onCopy, copying }: Props) 
 
   return createPortal(
     <div className="help-backdrop" onPointerDown={(event) => event.target === event.currentTarget && onClose()}>
-      <div ref={panel} className="help-dialog" role="dialog" aria-modal="true" aria-labelledby="help-heading">
+      <div
+        ref={panel}
+        className="help-dialog help-dialog-guide"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="help-heading"
+      >
         <header className="help-header">
           <div>
             <BookOpen size={19} />

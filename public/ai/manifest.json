@@ -1,9 +1,9 @@
 {
   "version": "0.2.0",
   "artifact": "raw-md-ai.zip",
-  "sha256": "8463b9ea4337427f147120d88835eb8fc488298f5bc549732c21dcac2574ebb2",
-  "bytes": 80290,
-  "sdkSha256": "32f90f228be58fef9a6efbac3bd9f72f4cc466c48b153824b23b5655c2432dd6",
+  "sha256": "a588a718d30773f0b767bb37008fabdebb99b0be2898e1e0ca7e620bb3a57d70",
+  "bytes": 80439,
+  "sdkSha256": "87920e51d7e4b9857fbe5d0d8af818828dfae25a8d45138fa88db8b2a7389323",
   "runtime": "node >=22",
   "cli": "plugin/skills/raw-md-export/scripts/share.mjs"
 }

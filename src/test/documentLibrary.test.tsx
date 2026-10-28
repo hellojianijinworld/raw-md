@@ -195,7 +195,7 @@ it('does not overwrite a locked library document when navigating back to a diffe
   await act(() => root.render(<App />))
   await act(() => host.querySelector<HTMLButtonElement>('[aria-label="메뉴"]')!.click())
   await act(async () => {
-    document.querySelector<HTMLButtonElement>('[aria-label="내 문서함"]')!.click()
+    document.querySelector<HTMLButtonElement>('[aria-label="문서"]')!.click()
     await new Promise((resolve) => setTimeout(resolve, 30))
   })
   await act(async () => {

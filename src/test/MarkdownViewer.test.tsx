@@ -1,6 +1,9 @@
 // @vitest-environment jsdom
+
+import { act } from 'react'
+import { createRoot } from 'react-dom/client'
 import { renderToStaticMarkup } from 'react-dom/server'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import MarkdownViewer from '../components/MarkdownViewer'
 
 function render(content: string) {
@@ -8,6 +11,42 @@ function render(content: string) {
   host.innerHTML = renderToStaticMarkup(<MarkdownViewer content={content} />)
   return host
 }
+
+it('fits the document to its widest top-level table and resets the width for the next document', async () => {
+  vi.stubGlobal('IS_REACT_ACT_ENVIRONMENT', true)
+  vi.spyOn(HTMLTableElement.prototype, 'getBoundingClientRect').mockImplementation(function (this: HTMLTableElement) {
+    return { width: Number(this.rows[1]?.cells[0]?.textContent) } as DOMRect
+  })
+  const host = document.createElement('div')
+  const root = createRoot(host)
+  try {
+    await act(() =>
+      root.render(
+        <MarkdownViewer
+          content={'| Width |\n| --- |\n| 960 |\n\n| Width |\n| --- |\n| 1280 |\n\n> | Width |\n> | --- |\n> | 2000 |'}
+        />,
+      ),
+    )
+    expect(host.firstElementChild?.getAttribute('style')).toContain('--document-table-width: 1280px')
+    await act(() => root.render(<MarkdownViewer content="# Ordinary document" />))
+    expect(host.firstElementChild?.getAttribute('style')).toContain('--document-table-width: 0px')
+  } finally {
+    await act(() => root.unmount())
+    vi.restoreAllMocks()
+    vi.unstubAllGlobals()
+  }
+})
+
+it('makes wide GFM tables keyboard-scrollable without losing headers, alignment or surrounding prose', () => {
+  const host = render('앞 문단\n\n| 항목 | 설명 |\n| :--- | ---: |\n| 보고서 | 아주 긴 내용 |\n\n뒤 문단')
+  const region = host.querySelector<HTMLElement>('section[aria-label="표"]')!
+  expect(region).not.toBeNull()
+  expect(region.tabIndex).toBe(0)
+  expect(region.querySelectorAll('thead th')).toHaveLength(2)
+  expect(region.querySelector('tbody td:last-child')?.getAttribute('style')).toContain('text-align:right')
+  expect(region.previousElementSibling?.textContent).toBe('앞 문단')
+  expect(region.nextElementSibling?.textContent).toBe('뒤 문단')
+})
 
 describe('fenced code highlighting', () => {
   it.each([

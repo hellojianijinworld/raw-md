@@ -1,4 +1,15 @@
-import { CircleHelp, Eye, FolderOpen, GitPullRequest, Link2, Menu, Pencil } from 'lucide-react'
+import {
+  ArrowLeft,
+  ChevronRight,
+  CircleHelp,
+  Eye,
+  FolderOpen,
+  GitPullRequest,
+  Link2,
+  Menu,
+  Pencil,
+  Settings,
+} from 'lucide-react'
 import { type RefObject, useEffect, useRef, useState } from 'react'
 import { useScrollToolbar } from '../hooks/useScrollToolbar'
 import { translate as t } from '../i18n/core'
@@ -39,7 +50,15 @@ export default function Toolbar({
 
   const toolbarVisible = useScrollToolbar()
   const [menuOpen, setMenuOpen] = useState(false)
+  const [menuPage, setMenuPage] = useState<'main' | 'settings'>('main')
   const menu = useRef<HTMLDivElement>(null)
+  const settingsButton = useRef<HTMLButtonElement>(null)
+  const backButton = useRef<HTMLButtonElement>(null)
+  useEffect(() => {
+    if (!menuOpen || menuPage !== 'settings') return
+    backButton.current?.focus()
+    return () => settingsButton.current?.focus()
+  }, [menuOpen, menuPage])
   useEffect(() => {
     if (!menuOpen) return
     const outside = (event: Event) => {
@@ -115,109 +134,139 @@ export default function Toolbar({
             aria-label={t('common.menu')}
             aria-expanded={menuOpen}
             aria-controls={menuOpen ? 'app-menu' : undefined}
-            onClick={() => setMenuOpen(!menuOpen)}
+            onClick={() => {
+              setMenuPage('main')
+              setMenuOpen(!menuOpen)
+            }}
           >
             <Menu size={18} />
           </button>
           {menuOpen && (
             <section id="app-menu" className="app-menu" aria-label={t('toolbar.menuLabel')}>
-              <button
-                type="button"
-                className="app-menu-help"
-                aria-label={t('common.library')}
-                aria-keyshortcuts="Meta+K Control+K"
-                onClick={() => {
-                  setMenuOpen(false)
-                  onOpenLibrary()
-                }}
-              >
-                <FolderOpen size={16} />
-                {t('common.library')}
-                <kbd className="menu-shortcut">⌘K / Ctrl+K</kbd>
-              </button>
-              <button
-                type="button"
-                className="app-menu-help"
-                onClick={() => {
-                  setMenuOpen(false)
-                  onToggleHelp()
-                }}
-              >
-                <CircleHelp size={16} />
-                {t('common.help')}
-              </button>
-              <a
-                className="app-menu-help"
-                href="https://github.com/hellojianijinworld/raw-md/blob/main/CONTRIBUTING.md"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                <GitPullRequest size={16} />
-                {t('toolbar.contribute')}
-              </a>
-              <fieldset>
-                <legend>{t('toolbar.theme')}</legend>
-                {(
-                  [
-                    ['auto', t('toolbar.system')],
-                    ['light', t('toolbar.light')],
-                    ['dark', t('toolbar.dark')],
-                  ] as const
-                ).map(([value, label]) => (
-                  <label key={value}>
-                    <input
-                      type="radio"
-                      name="theme"
-                      value={value}
-                      checked={themeMode === value}
-                      onChange={() => onThemeChange(value)}
-                    />
-                    {label}
-                  </label>
-                ))}
-              </fieldset>
-              <fieldset>
-                <legend>{t('toolbar.language')}</legend>
-                {(
-                  [
-                    ['auto', t('toolbar.browserLanguage')],
-                    ['ko', t('language.ko')],
-                    ['en', t('language.en')],
-                  ] as const
-                ).map(([value, label]) => (
-                  <label key={value}>
-                    <input
-                      type="radio"
-                      name="language"
-                      value={value}
-                      checked={languagePreference === value}
-                      onChange={() => setLanguagePreference(value)}
-                    />
-                    {label}
-                  </label>
-                ))}
-              </fieldset>
-              <div className="app-menu-version">
-                <a
-                  href={import.meta.env.VITE_RELEASE_URL || 'https://github.com/hellojianijinworld/raw-md/releases'}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  title={t('toolbar.releaseHint')}
-                >
-                  {import.meta.env.VITE_RELEASE_VERSION
-                    ? t('toolbar.release', { version: import.meta.env.VITE_RELEASE_VERSION })
-                    : t('toolbar.noRelease')}
-                </a>
-                {import.meta.env.VITE_BUILD_COMMIT && (
+              {menuPage === 'main' ? (
+                <>
+                  <button
+                    type="button"
+                    className="app-menu-help"
+                    aria-label={t('common.library')}
+                    aria-keyshortcuts="Meta+K Control+K"
+                    onClick={() => {
+                      setMenuOpen(false)
+                      onOpenLibrary()
+                    }}
+                  >
+                    <FolderOpen size={16} />
+                    {t('common.library')}
+                    <kbd className="menu-shortcut">⌘K / Ctrl+K</kbd>
+                  </button>
+                  <button
+                    type="button"
+                    className="app-menu-help"
+                    onClick={() => {
+                      setMenuOpen(false)
+                      onToggleHelp()
+                    }}
+                  >
+                    <CircleHelp size={16} />
+                    {t('common.help')}
+                  </button>
+                  <button
+                    ref={settingsButton}
+                    type="button"
+                    className="app-menu-help"
+                    onClick={() => setMenuPage('settings')}
+                  >
+                    <Settings size={16} />
+                    {t('toolbar.settings')}
+                    <ChevronRight size={14} className="menu-chevron" />
+                  </button>
                   <a
-                    href={`https://github.com/hellojianijinworld/raw-md/commit/${import.meta.env.VITE_BUILD_COMMIT}`}
+                    className="app-menu-help"
+                    href="https://github.com/hellojianijinworld/raw-md/blob/main/CONTRIBUTING.md"
                     target="_blank"
                     rel="noopener noreferrer"
                   >
-                    {t('toolbar.build', { commit: import.meta.env.VITE_BUILD_COMMIT.slice(0, 7) })}
+                    <GitPullRequest size={16} />
+                    {t('toolbar.contribute')}
                   </a>
-                )}
-              </div>
+                </>
+              ) : (
+                <>
+                  <button
+                    ref={backButton}
+                    type="button"
+                    className="app-menu-help app-menu-back"
+                    aria-label={t('toolbar.back')}
+                    onClick={() => setMenuPage('main')}
+                  >
+                    <ArrowLeft size={16} />
+                    {t('toolbar.settings')}
+                  </button>
+                  <fieldset>
+                    <legend>{t('toolbar.theme')}</legend>
+                    {(
+                      [
+                        ['auto', t('toolbar.system')],
+                        ['light', t('toolbar.light')],
+                        ['dark', t('toolbar.dark')],
+                      ] as const
+                    ).map(([value, label]) => (
+                      <label key={value}>
+                        <input
+                          type="radio"
+                          name="theme"
+                          value={value}
+                          checked={themeMode === value}
+                          onChange={() => onThemeChange(value)}
+                        />
+                        {label}
+                      </label>
+                    ))}
+                  </fieldset>
+                  <fieldset>
+                    <legend>{t('toolbar.language')}</legend>
+                    {(
+                      [
+                        ['auto', t('toolbar.browserLanguage')],
+                        ['ko', t('language.ko')],
+                        ['en', t('language.en')],
+                      ] as const
+                    ).map(([value, label]) => (
+                      <label key={value}>
+                        <input
+                          type="radio"
+                          name="language"
+                          value={value}
+                          checked={languagePreference === value}
+                          onChange={() => setLanguagePreference(value)}
+                        />
+                        {label}
+                      </label>
+                    ))}
+                  </fieldset>
+                  <div className="app-menu-version">
+                    <a
+                      href={import.meta.env.VITE_RELEASE_URL || 'https://github.com/hellojianijinworld/raw-md/releases'}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      title={t('toolbar.releaseHint')}
+                    >
+                      {import.meta.env.VITE_RELEASE_VERSION
+                        ? t('toolbar.release', { version: import.meta.env.VITE_RELEASE_VERSION })
+                        : t('toolbar.noRelease')}
+                    </a>
+                    {import.meta.env.VITE_BUILD_COMMIT && (
+                      <a
+                        href={`https://github.com/hellojianijinworld/raw-md/commit/${import.meta.env.VITE_BUILD_COMMIT}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        {t('toolbar.build', { commit: import.meta.env.VITE_BUILD_COMMIT.slice(0, 7) })}
+                      </a>
+                    )}
+                  </div>
+                </>
+              )}
             </section>
           )}
         </div>

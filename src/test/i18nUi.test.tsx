@@ -43,6 +43,7 @@ it('uses the browser language and switches UI without changing Markdown or the c
   })
   const hash = window.location.hash
   await act(() => host.querySelector<HTMLButtonElement>('[aria-label="Menu"]')!.click())
+  await act(() => [...host.querySelectorAll('button')].find((button) => button.textContent === 'Preferences')!.click())
   await act(() => host.querySelector<HTMLInputElement>('input[name="language"][value="ko"]')!.click())
   expect(document.documentElement.lang).toBe('ko')
   expect(host.querySelector('[aria-label="링크"]')).not.toBeNull()
