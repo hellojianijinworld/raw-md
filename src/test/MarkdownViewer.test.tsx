@@ -50,3 +50,25 @@ describe('fenced code highlighting', () => {
     expect(host.querySelector('script')).toBeNull()
   })
 })
+
+it('assigns document-wide headings and resolves standard Korean links around Mermaid blocks', () => {
+  window.history.replaceState(null, '', '/#BYUwNmD2Q')
+  const host = render(
+    '[이동](#같은-제목-1)\n\n## 같은 제목\n\n```mermaid\nflowchart TD\n A-->B\n```\n\n## 같은 제목\n\n### **강조**와 `코드`',
+  )
+  const headings = [...host.querySelectorAll('h2,h3')]
+  expect(headings.map((h) => h.id)).toEqual(['raw-md-heading-1', 'raw-md-heading-2', 'raw-md-heading-3'])
+  expect(headings.map((h) => h.getAttribute('data-heading-slug'))).toEqual(['같은-제목', '같은-제목-1', '강조와-코드'])
+  expect(host.querySelector('a[data-heading-target="2"]')).not.toBeNull()
+})
+
+it('preserves generated footnote labels and resolves their local targets without replacing the payload', () => {
+  window.history.replaceState(null, '', '/#BYUwNmD2Q')
+  const host = render('# 문서\n\n주석[^1]\n\n[^1]: 설명')
+  const reference = host.querySelector('a[data-footnote-ref]')!
+  expect(host.querySelector(`[id="${reference.getAttribute('aria-describedby')}"]`)).not.toBeNull()
+  const target = reference.getAttribute('data-document-target')!
+  expect(host.querySelector(`[id="${target}"]`)).not.toBeNull()
+  expect(reference.getAttribute('href')).toBe(`${window.location.origin}/#BYUwNmD2Q`)
+  expect(host.querySelectorAll('[data-heading-index]')).toHaveLength(1)
+})

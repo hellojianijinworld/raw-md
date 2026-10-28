@@ -2,7 +2,7 @@
 
 import { webcrypto } from 'node:crypto'
 import { createRequire } from 'node:module'
-import { act } from 'react'
+import { act, StrictMode } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, it, vi } from 'vitest'
 import App from '../App'
@@ -248,7 +248,10 @@ it('copies a protected link, requires a password to open it, retries a wrong pas
   const encryptedHash = new URL(copied).hash
   expect(encryptedHash).toMatch(/^#e1\./)
   expect(await decryptMarkdown(encryptedHash.slice(1), brotli, password)).toBe(source)
-  await act(() => window.dispatchEvent(new HashChangeEvent('hashchange')))
+  // A refresh opens a new App; a same-document position event preserves its unlock state.
+  await act(() => root.unmount())
+  root = createRoot(host)
+  await act(() => root.render(<App />))
   expect(host.textContent).toContain('비밀번호로 보호된 문서')
   expect(host.querySelector('textarea')).toBeNull()
   expect(CompressionWorker.pending).toHaveLength(0)
@@ -468,4 +471,84 @@ it('selects explicit themes from the hamburger settings and keeps help accessibl
   await act(() => button('도움말').click())
   expect(document.querySelector('#app-menu')).toBeNull()
   expect(document.querySelector('[role="dialog"]')?.textContent).toContain('웹에서 바로 사용하세요')
+})
+
+it('navigates headings and history without decoding the document again', async () => {
+  const source = '[이동](#목적지)\n\n# 시작\n\n## 목적지'
+  const payload = encodeMarkdown(source, brotli)
+  window.history.replaceState(null, '', `/#${payload}~h=1`)
+  await act(() => root.render(<App />))
+  expect(CompressionWorker.pending[0].task.value).toBe(payload)
+  await act(() => CompressionWorker.finishAll())
+  const target = host.querySelector<HTMLElement>('#raw-md-heading-2')!
+  await act(() => host.querySelector<HTMLAnchorElement>('a[data-heading-target="2"]')!.click())
+  expect(window.location.hash).toBe(`#${payload}~h=2`)
+  expect(CompressionWorker.pending).toHaveLength(0)
+  expect(document.activeElement).toBe(target)
+  expect(target).toBe(host.querySelector('#raw-md-heading-2'))
+  await act(() => {
+    window.history.replaceState(null, '', `/#${payload}~h=1`)
+    window.dispatchEvent(new PopStateEvent('popstate'))
+    window.dispatchEvent(new HashChangeEvent('hashchange'))
+  })
+  expect(CompressionWorker.pending).toHaveLength(0)
+  expect(document.activeElement).toBe(host.querySelector('#raw-md-heading-1'))
+})
+
+it('preserves an unlocked password during section navigation and disables shareable draft anchors', async () => {
+  const password = 'test-password'
+  const payload = await encryptMarkdown('# 시작\n\n## 목적지', brotli, password)
+  window.history.replaceState(null, '', `/#${payload}~h=2`)
+  await act(() => root.render(<App />))
+  await act(() => {
+    const input = host.querySelector<HTMLInputElement>('#unlock-password')!
+    Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!.call(input, password)
+    input.dispatchEvent(new Event('input', { bubbles: true }))
+  })
+  await act(() => host.querySelector('form')!.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true })))
+  await act(() => CompressionWorker.finishAll())
+  await act(() => host.querySelector<HTMLAnchorElement>('a[data-heading-target="1"]')!.click())
+  expect(window.location.hash).toBe(`#${payload}~h=1`)
+  expect(host.querySelector('#unlock-password')).toBeNull()
+  expect(CompressionWorker.pending).toHaveLength(0)
+  await act(() => button('수정').click())
+  await edit('# 변경\n\n## 다른 목적지')
+  expect(window.location.hash).toBe(`#${payload}`)
+  expect(host.querySelector('.markdown-body a.heading-link')).toBeNull()
+  expect(host.querySelector('.markdown-body button.heading-link')).not.toBeNull()
+  expect(window.location.href).not.toContain(password)
+})
+
+it('loads positioned documents under React StrictMode', async () => {
+  window.history.replaceState(null, '', '/#BYUwNmD2Q~h=1')
+  await act(() =>
+    root.render(
+      <StrictMode>
+        <App />
+      </StrictMode>,
+    ),
+  )
+  await act(() => CompressionWorker.finishAll())
+  expect(host.textContent).toContain('hello')
+  expect(host.querySelector('.document-status')).toBeNull()
+})
+
+it('keeps Mermaid mounted and preview scroll stable during unrelated edits after navigation', async () => {
+  vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue(null)
+  const source = '# 제목\n\n```mermaid\nflowchart LR\n A-->B\n```\n\n내용'
+  window.history.replaceState(null, '', `/?edit=true#${encodeMarkdown(source, brotli)}`)
+  await act(() => root.render(<App />))
+  await act(() => CompressionWorker.finishAll())
+  await act(async () => {
+    await vi.waitFor(() => expect(host.querySelector('.mermaid-diagram svg')).not.toBeNull())
+  })
+  const diagram = host.querySelector('.mermaid-diagram svg')
+  await act(() => host.querySelector<HTMLAnchorElement>('a.heading-link')!.click())
+  const top = vi.fn()
+  Object.defineProperty(host.querySelector('.preview-pane'), 'scrollTo', { value: top })
+  await edit(`${source} 수정`)
+  await edit(`${source} 수정 계속`)
+  expect(host.querySelector('.mermaid-diagram svg')).toBe(diagram)
+  expect(top).not.toHaveBeenCalled()
+  expect(window.location.hash).not.toContain('~h=')
 })

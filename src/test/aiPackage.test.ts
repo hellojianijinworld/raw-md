@@ -67,7 +67,7 @@ it('builds a deterministic archive containing only the optional integration file
   expect(readFileSync(archive)).toEqual(originalArchive)
   const sdk = readFileSync(join(extracted, 'plugin/skills/raw-md-export/scripts/share.mjs'))
   expect(json(join(root, 'public/ai/manifest.json'))).toMatchObject({
-    version: '0.1.0',
+    version: '0.2.0',
     artifact: 'raw-md-ai.zip',
     sha256: createHash('sha256').update(originalArchive).digest('hex'),
     bytes: originalArchive.length,
@@ -91,11 +91,11 @@ it('resolves both marketplaces to one plugin with the shared skill and exact off
   expect(json(join(codexPlugin, 'plugin.json'))).toMatchObject({
     $schema: 'https://agent-plugins.org/schemas/1.0.0/plugin.schema.json',
     name: 'raw-md-ai',
-    version: '0.1.0',
+    version: '0.2.0',
   })
   expect(json(join(claudePlugin, '.claude-plugin/plugin.json'))).toMatchObject({
     name: 'raw-md-ai',
-    version: '0.1.0',
+    version: '0.2.0',
   })
   for (const file of ['SKILL.md', 'scripts/share.mjs', 'scripts/share.mjs.sha256']) {
     expect(readFileSync(join(codexPlugin, 'skills/raw-md-export', file))).toEqual(

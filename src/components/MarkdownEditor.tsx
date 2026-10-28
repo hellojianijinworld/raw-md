@@ -5,9 +5,10 @@ import MarkdownViewer from './MarkdownViewer'
 interface MarkdownEditorProps {
   content: string
   onChange: (value: string) => void
+  sectionLinksEnabled?: boolean
 }
 
-export default function MarkdownEditor({ content, onChange }: MarkdownEditorProps) {
+export default function MarkdownEditor({ content, onChange, sectionLinksEnabled }: MarkdownEditorProps) {
   const isMobile = useMediaQuery('(max-width: 768px) and (orientation: portrait)')
 
   const handleFileUpload = () => {
@@ -67,7 +68,7 @@ export default function MarkdownEditor({ content, onChange }: MarkdownEditorProp
         />
       </div>
       <div className="preview-pane">
-        <MarkdownViewer content={content} />
+        <MarkdownViewer content={content} sectionLinksEnabled={sectionLinksEnabled} />
       </div>
     </div>
   )

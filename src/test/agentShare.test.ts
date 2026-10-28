@@ -384,3 +384,29 @@ it('bounds legacy expansion and rejects passwords or encode options on plain rea
     expect(result.stderr).toBe('rejected')
   }
 })
+
+it.each([
+  'BYUwNmD2Q~h=2',
+  '#BYUwNmD2Q~h=2',
+  'https://raw-md.pages.dev/#BYUwNmD2Q~h=2',
+])('reads positioned legacy links offline: %s', (input) => {
+  const result = api(input, undefined, 'readShareLink')
+  expect(result.status).toBe(0)
+  expect(JSON.parse(result.stdout)).toEqual({
+    formatVersion: 2,
+    markdown: 'hello',
+    sourceBytes: 5,
+    encrypted: false,
+    heading: 2,
+  })
+})
+it('reads positioned encrypted links and rejects malformed position metadata', () => {
+  const created = api('# document', { mode: 'custom', password: 'test-password' })
+  const { url } = JSON.parse(created.stdout)
+  const result = api(`${url}~h=1`, { password: 'test-password' }, 'readShareLink')
+  expect(result.status).toBe(0)
+  expect(JSON.parse(result.stdout)).toMatchObject({ markdown: '# document', encrypted: true, heading: 1 })
+  for (const suffix of ['~h=0', '~h=2~h=3', '~h=1.5', '~other=3']) {
+    expect(api(`BYUwNmD2Q${suffix}`, undefined, 'readShareLink').status).toBe(1)
+  }
+})

@@ -1,5 +1,7 @@
 import { defaultSchema } from 'rehype-sanitize'
 
+export const SANITIZE_ID_PREFIX = defaultSchema.clobberPrefix ?? 'user-content-'
+
 /**
  * rehype-sanitize 커스텀 스키마
  *

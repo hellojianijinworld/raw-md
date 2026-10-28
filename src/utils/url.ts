@@ -1,5 +1,6 @@
 import LZString from 'lz-string'
 import { runCompressionTask } from './compression'
+import { parseShareFragment } from './shareFragment'
 
 // URL 해시에서 마크다운을 읽고 쓰는 유틸
 
@@ -8,13 +9,13 @@ import { runCompressionTask } from './compression'
  * 해시가 비어있으면 빈 문자열을 반환한다.
  */
 export function decodeMarkdownFromHash(signal?: AbortSignal, password?: string): Promise<string> {
-  const raw = window.location.hash.slice(1)
+  const raw = parseShareFragment(window.location.hash).payload
   return raw ? runCompressionTask({ action: 'decode', value: raw, password }, signal) : Promise.resolve('')
 }
 
 export function isEncryptedHash(raw = window.location.hash.slice(1)): boolean {
   try {
-    return decodeURIComponent(raw).startsWith('e1.')
+    return decodeURIComponent(parseShareFragment(raw).payload).startsWith('e1.')
   } catch {
     return false
   }

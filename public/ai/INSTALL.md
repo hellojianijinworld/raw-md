@@ -59,3 +59,7 @@ Decoding reads a URL or fragment from a local file or stdin, without fetching th
 `share.mjs.sha256` accompanies the CLI, and the download's `manifest.json` records the ZIP and SDK SHA-256 digests. The package is generated from the repository's shared skill and SDK rather than maintaining separate host implementations.
 
 Installation commands above are for you to run when ready; downloading or extracting the archive does not change host settings. Host installation has not been verified by a live AI session.
+
+## Section links (0.2.0+)
+
+The reader accepts links ending in `~h=3` without changing their document payload. It returns the full Markdown and an optional `heading` field (one-based heading order). Pass the complete link to the local CLI; do not strip or reconstruct its fragment. Existing plain and encrypted links remain supported. Reinstall/update older plugin copies to read positioned links. Newly exported documents do not inherit an old position.

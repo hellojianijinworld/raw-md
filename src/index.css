@@ -959,3 +959,37 @@ a.app-menu-help {
   color: var(--fgColor-accent);
   text-decoration: underline;
 }
+
+.markdown-body [data-heading-index] {
+  scroll-margin-top: 24px;
+}
+.markdown-body .heading-link {
+  margin-left: 0.5em;
+  color: var(--fgColor-muted);
+  font-size: 0.75em;
+  font-weight: 400;
+  text-decoration: none;
+  opacity: 0;
+}
+.markdown-body :is(h1, h2, h3, h4, h5, h6):hover .heading-link,
+.markdown-body .heading-link:focus-visible {
+  opacity: 1;
+}
+.document-anchor {
+  display: inline;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--fgColor-accent);
+  font: inherit;
+  cursor: pointer;
+}
+.anchor-notice {
+  color: var(--fgColor-muted);
+  font-size: 13px;
+}
+@media (hover: none) {
+  .markdown-body .heading-link {
+    opacity: 0.65;
+  }
+}

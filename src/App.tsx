@@ -7,6 +7,7 @@ import Toolbar, { type CopyStatus } from './components/Toolbar'
 import UnlockDocument from './components/UnlockDocument'
 import { useTheme } from './hooks/useTheme'
 import { generateSharePassword, type ShareMode } from './utils/password'
+import { parseShareFragment } from './utils/shareFragment'
 import {
   copyShareUrlToClipboard,
   decodeMarkdownFromHash,
@@ -38,6 +39,7 @@ function App() {
   const lastCopiedRef = useRef<string>(markdown)
   const revisionRef = useRef(0)
   const privateDraftRef = useRef(false)
+  const documentPayloadRef = useRef<string | undefined>(undefined)
   const loadControllerRef = useRef<AbortController | null>(null)
   const copyControllerRef = useRef<AbortController | null>(null)
   const textCopyPendingRef = useRef(false)
@@ -87,6 +89,15 @@ function App() {
 
   useEffect(() => {
     const handleHashChange = () => {
+      let payload: string
+      try {
+        payload = parseShareFragment(window.location.hash).payload
+      } catch {
+        payload = window.location.hash
+      }
+      // Heading-only navigation must not discard a password, draft, or running decode.
+      if (documentPayloadRef.current === payload) return
+      documentPayloadRef.current = payload
       copyControllerRef.current?.abort()
       copyControllerRef.current = null
       clearTimeout(copyTimerRef.current)
@@ -100,9 +111,12 @@ function App() {
     }
     handleHashChange()
     window.addEventListener('hashchange', handleHashChange)
+    window.addEventListener('popstate', handleHashChange)
     return () => {
       window.removeEventListener('hashchange', handleHashChange)
+      window.removeEventListener('popstate', handleHashChange)
       loadControllerRef.current?.abort()
+      documentPayloadRef.current = undefined
       copyControllerRef.current?.abort()
       clearTimeout(copyTimerRef.current)
     }
@@ -123,8 +137,19 @@ function App() {
     setMarkdown(value)
     setLinkLength(undefined)
     // Protected drafts stay in memory until the user explicitly shares them again.
-    if (privateDraftRef.current) setPrivateDraftPending(true)
-    else window.history.replaceState(null, '', `#${encodeMarkdownToHash(value)}`)
+    if (privateDraftRef.current) {
+      setPrivateDraftPending(true)
+      const payload = parseShareFragment(window.location.hash).payload
+      window.history.replaceState(
+        null,
+        '',
+        window.location.pathname + window.location.search + (payload ? `#${payload}` : ''),
+      )
+    } else {
+      const payload = encodeMarkdownToHash(value)
+      documentPayloadRef.current = payload
+      window.history.replaceState(null, '', `#${payload}`)
+    }
   }, [])
 
   const toggleEditMode = useCallback(() => {
@@ -152,6 +177,7 @@ function App() {
       privateDraftRef.current = true
       if (!isEncryptedHash()) {
         window.history.replaceState(null, '', window.location.pathname + window.location.search)
+        documentPayloadRef.current = ''
         setPrivateDraftPending(true)
       }
     } else {
@@ -190,6 +216,7 @@ function App() {
       lastCopiedRef.current = markdown
       if (revision === revisionRef.current) {
         window.history.replaceState(null, '', window.location.pathname + window.location.search + new URL(url).hash)
+        documentPayloadRef.current = parseShareFragment(new URL(url).hash).payload
         privateDraftRef.current = protectedLink
         setPrivateDraftPending(false)
         setLinkLength(url.length)
@@ -254,7 +281,7 @@ function App() {
         </p>
       )}
       {loadState === 'locked' ? (
-        <UnlockDocument key={window.location.hash} busy={unlocking} error={loadError} onUnlock={loadDocument} />
+        <UnlockDocument key={documentPayloadRef.current} busy={unlocking} error={loadError} onUnlock={loadDocument} />
       ) : loadState === 'loading' ? (
         <div className="document-status" role="status">
           문서를 불러오는 중...
@@ -265,10 +292,10 @@ function App() {
           <p>{loadError}</p>
         </div>
       ) : editMode ? (
-        <MarkdownEditor content={markdown} onChange={handleMarkdownChange} />
+        <MarkdownEditor content={markdown} onChange={handleMarkdownChange} sectionLinksEnabled={!privateDraftPending} />
       ) : (
         <div className="viewer-container">
-          <MarkdownViewer content={markdown} />
+          <MarkdownViewer content={markdown} sectionLinksEnabled={!privateDraftPending} />
         </div>
       )}
     </div>

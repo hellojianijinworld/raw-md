@@ -1,8 +1,8 @@
 {
   "formatVersion": 2,
   "artifact": "share.mjs",
-  "sha256": "f25af408da7b4b92158e170b0c79029ea0cce2b26046a1d91dc9d0de2ca0e14e",
-  "bytes": 48230,
+  "sha256": "f18d4198e4824e0fc327a7dd4392445ec756c096bfb35b7d0c920c27342d730f",
+  "bytes": 48694,
   "runtime": "node >=22",
   "sdkExports": [
     "createShareLink",

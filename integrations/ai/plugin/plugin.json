@@ -1,7 +1,7 @@
 {
   "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
   "name": "raw-md-ai",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Read raw-md links and export Markdown links with an offline CLI.",
   "author": { "name": "raw-md" },
   "homepage": "https://raw-md.pages.dev/",

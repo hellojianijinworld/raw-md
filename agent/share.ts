@@ -4,6 +4,7 @@ import { parseArgs } from 'node:util'
 import { brotliCompressSync, brotliDecompressSync, constants } from 'node:zlib'
 import { decryptMarkdown, encryptMarkdown } from '../src/utils/encryption'
 import { generateSharePassword, type ShareMode } from '../src/utils/password'
+import { parseShareFragment } from '../src/utils/shareFragment'
 import {
   type BrotliDecoder,
   type BrotliEncoder,
@@ -56,6 +57,7 @@ export interface ReadShareLink {
   markdown: string
   sourceBytes: number
   encrypted: boolean
+  heading?: number
 }
 
 function validOptions(options: unknown, keys: string[]): void {
@@ -140,6 +142,8 @@ export async function readShareLink(input: string, options: ReadOptions = {}): P
     if (/^https?:\/\//i.test(value)) fragment = new URL(value).hash.slice(1)
     else if (/^[a-z][a-z\d+.-]*:/i.test(value)) throw new Error('Unsupported URL.')
     if (!fragment || fragment.length > MAX_HASH_LENGTH) throw new Error('Invalid fragment.')
+    const position = parseShareFragment(fragment)
+    fragment = position.payload
     const hash = decodeURIComponent(fragment)
     const encrypted = hash.startsWith('e1.')
     if (encrypted) validPassword(options.password)
@@ -147,7 +151,13 @@ export async function readShareLink(input: string, options: ReadOptions = {}): P
     const markdown = encrypted
       ? await decryptMarkdown(hash, brotli, options.password!)
       : decodeMarkdown(fragment, brotli)
-    return { formatVersion: 2, markdown, sourceBytes: Buffer.byteLength(markdown, 'utf8'), encrypted }
+    return {
+      formatVersion: 2,
+      markdown,
+      sourceBytes: Buffer.byteLength(markdown, 'utf8'),
+      encrypted,
+      ...(position.heading === undefined ? {} : { heading: position.heading }),
+    }
   } catch {
     throw new Error('Could not read share link. Check input and password.')
   }
