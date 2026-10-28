@@ -227,7 +227,7 @@ it('opens a popover with the exact UTF-8 source size without copying automatical
   await act(() => button('링크').click())
   expect(copied).toBe('')
   expect(document.querySelector('[role="dialog"]')?.textContent).toContain(
-    `${new TextEncoder().encode(source).length} bytes`,
+    `${new TextEncoder().encode(source).length} B`,
   )
   expect(button('링크').getAttribute('aria-expanded')).toBe('true')
   await act(() => document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true })))

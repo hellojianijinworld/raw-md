@@ -2,6 +2,7 @@ import { Check, Copy, Eye, EyeOff, X } from 'lucide-react'
 import { type RefObject, useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { documentSecretInput } from '../utils/documentSecret'
+import { formatBytes } from '../utils/formatBytes'
 import { generateSharePassword, type ShareMode } from '../utils/password'
 import type { CopyStatus } from './Toolbar'
 
@@ -106,7 +107,7 @@ export default function SharePopover({
           <dt>
             원문 용량 <span>UTF-8</span>
           </dt>
-          <dd>{bytes.toLocaleString('en-US')} bytes</dd>
+          <dd title={`${bytes.toLocaleString('en-US')} bytes`}>{formatBytes(bytes)}</dd>
         </div>
         {linkLength !== undefined && (
           <div>
