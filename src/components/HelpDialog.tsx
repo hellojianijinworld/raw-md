@@ -127,7 +127,10 @@ export default function HelpDialog({ anchor, onClose, onCopy, copying }: Props) 
               </ol>
               <div className="help-note">
                 <strong>문서가 URL 안에 들어 있습니다.</strong>
-                <p>raw-md는 문서를 서버에 저장하지 않습니다. 나중에 다시 열 수 있도록 링크를 보관해주세요.</p>
+                <p>
+                  raw-md는 문서를 서버에 저장하지 않습니다. 문서함은 이 브라우저에만 저장되므로 중요한 문서는 링크나
+                  파일로 따로 보관해주세요.
+                </p>
               </div>
               <button type="button" className="btn help-ai-entry" onClick={() => setTab('ai')}>
                 <Sparkles size={16} />

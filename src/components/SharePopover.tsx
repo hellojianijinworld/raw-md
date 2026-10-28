@@ -13,11 +13,14 @@ interface Props {
   password: string
   status: CopyStatus
   copyingPassword: boolean
+  savingDocument: boolean
+  documentSaved: boolean
   linkLength?: number
   onModeChange: (value: ShareMode) => void
   onPasswordChange: (value: string) => void
   onCopy: () => void
   onCopyPassword: () => Promise<boolean>
+  onSaveDocument: () => void
   onClose: () => void
 }
 
@@ -28,11 +31,14 @@ export default function SharePopover({
   password,
   status,
   copyingPassword,
+  savingDocument,
+  documentSaved,
   linkLength,
   onModeChange,
   onPasswordChange,
   onCopy,
   onCopyPassword,
+  onSaveDocument,
   onClose,
 }: Props) {
   const panel = useRef<HTMLDivElement>(null)
@@ -41,7 +47,7 @@ export default function SharePopover({
   const [passwordCopyStatus, setPasswordCopyStatus] = useState<'idle' | 'copied' | 'error'>('idle')
   const passwordRevision = useRef(0)
   const bytes = new TextEncoder().encode(markdown).length
-  const busy = status === 'compressing'
+  const busy = status === 'compressing' || savingDocument
   const protectedLink = mode !== 'plain'
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: A password change resets feedback and invalidates pending clipboard writes.
@@ -223,6 +229,21 @@ export default function SharePopover({
           </div>
         )}
         <p className="share-note">문서는 서버에 저장되지 않습니다.</p>
+        {protectedLink && (
+          <p className="share-note">
+            이전에 문서함에 저장한 일반 문서는 암호화되지 않습니다. 필요하면 문서함에서 삭제해주세요.
+          </p>
+        )}
+        {protectedLink && (
+          <button
+            type="button"
+            className="btn share-copy"
+            disabled={busy || copyingPassword || !password}
+            onClick={onSaveDocument}
+          >
+            {savingDocument ? '암호화 중...' : documentSaved ? '문서함에 저장됨' : '암호화해 문서함에 저장'}
+          </button>
+        )}
         <button
           type="submit"
           className="btn share-copy"

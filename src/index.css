@@ -880,6 +880,63 @@ body {
 .toolbar-menu {
   position: relative;
 }
+
+.library-content {
+  padding: 16px 20px 24px;
+  overflow-y: auto;
+}
+.library-search {
+  width: 100%;
+  padding: 9px 12px;
+  margin: 8px 0;
+  border: 1px solid var(--borderColor-default);
+  border-radius: 6px;
+  background: var(--bgColor-default);
+  color: inherit;
+}
+.library-cleanup-note {
+  margin-top: 16px;
+}
+.menu-shortcut {
+  margin-left: auto;
+  font-size: 10px;
+  white-space: nowrap;
+  color: var(--fgColor-muted);
+}
+.library-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.library-list li {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  border-bottom: 1px solid var(--borderColor-default);
+  padding: 8px 0;
+}
+.library-open {
+  flex: 1;
+  min-width: 0;
+  text-align: left;
+  border: 0;
+  color: inherit;
+  background: transparent;
+  cursor: pointer;
+  padding: 6px;
+}
+.library-open strong,
+.library-open span {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.library-open span {
+  margin-top: 4px;
+  color: var(--fgColor-muted);
+  font-size: 12px;
+}
 .app-menu {
   position: absolute;
   right: 0;

@@ -1,4 +1,4 @@
-import { CircleHelp, Eye, GitPullRequest, Link2, Menu, Pencil } from 'lucide-react'
+import { CircleHelp, Eye, FolderOpen, GitPullRequest, Link2, Menu, Pencil } from 'lucide-react'
 import { type RefObject, useEffect, useRef, useState } from 'react'
 import { useScrollToolbar } from '../hooks/useScrollToolbar'
 
@@ -12,6 +12,7 @@ interface ToolbarProps {
   shareButtonRef: RefObject<HTMLButtonElement | null>
   helpButtonRef: RefObject<HTMLButtonElement | null>
   onToggleHelp: () => void
+  onOpenLibrary: () => void
   isDirty: boolean
   themeMode: 'auto' | 'light' | 'dark'
   onThemeChange: (mode: 'auto' | 'light' | 'dark') => void
@@ -26,6 +27,7 @@ export default function Toolbar({
   shareButtonRef,
   helpButtonRef,
   onToggleHelp,
+  onOpenLibrary,
   isDirty,
   themeMode,
   onThemeChange,
@@ -111,6 +113,19 @@ export default function Toolbar({
           </button>
           {menuOpen && (
             <section id="app-menu" className="app-menu" aria-label="도움말 및 설정">
+              <button
+                type="button"
+                className="app-menu-help"
+                aria-label="내 문서함"
+                aria-keyshortcuts="Meta+K Control+K"
+                onClick={() => {
+                  setMenuOpen(false)
+                  onOpenLibrary()
+                }}
+              >
+                <FolderOpen size={16} />내 문서함
+                <kbd className="menu-shortcut">⌘K / Ctrl+K</kbd>
+              </button>
               <button
                 type="button"
                 className="app-menu-help"
