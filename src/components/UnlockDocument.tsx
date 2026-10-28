@@ -1,5 +1,6 @@
 import { LockKeyhole } from 'lucide-react'
 import { useState } from 'react'
+import { documentSecretInput } from '../utils/documentSecret'
 
 export default function UnlockDocument({
   busy,
@@ -15,6 +16,7 @@ export default function UnlockDocument({
     <div className="unlock-container">
       <form
         className="unlock-card"
+        autoComplete="off"
         onSubmit={(event) => {
           event.preventDefault()
           onUnlock(password)
@@ -23,11 +25,12 @@ export default function UnlockDocument({
         <LockKeyhole size={28} aria-hidden="true" />
         <h2>비밀번호로 보호된 문서</h2>
         <p className="share-note">공유한 사람이 알려준 비밀번호를 입력해주세요.</p>
-        <label htmlFor="unlock-password">비밀번호</label>
+        <label htmlFor="document-unlock-key">비밀번호</label>
         <input
-          id="unlock-password"
+          id="document-unlock-key"
+          name="document-unlock-key"
           type="password"
-          autoComplete="current-password"
+          {...documentSecretInput}
           required
           value={password}
           disabled={busy}

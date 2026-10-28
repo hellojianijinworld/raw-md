@@ -1,6 +1,7 @@
 import { Check, Copy, Eye, EyeOff, X } from 'lucide-react'
 import { type RefObject, useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
+import { documentSecretInput } from '../utils/documentSecret'
 import { generateSharePassword, type ShareMode } from '../utils/password'
 import type { CopyStatus } from './Toolbar'
 
@@ -115,6 +116,7 @@ export default function SharePopover({
         )}
       </dl>
       <form
+        autoComplete="off"
         onSubmit={(event) => {
           event.preventDefault()
           onCopy()
@@ -150,16 +152,17 @@ export default function SharePopover({
         {protectedLink && (
           <div className="share-password">
             <div className="share-password-heading">
-              <label htmlFor="share-password">비밀번호</label>
+              <label htmlFor="document-share-key">비밀번호</label>
             </div>
             <div className="password-field">
               <input
-                id="share-password"
+                id="document-share-key"
+                name="document-share-key"
                 type={showPassword ? 'text' : 'password'}
                 value={password}
                 required
                 disabled={busy}
-                autoComplete="new-password"
+                {...documentSecretInput}
                 aria-describedby="password-hint"
                 onChange={(event) => {
                   if (mode === 'secure') onModeChange('custom')
@@ -171,7 +174,7 @@ export default function SharePopover({
                 className="password-visibility"
                 aria-label={showPassword ? '비밀번호 숨기기' : '비밀번호 표시'}
                 title={showPassword ? '비밀번호 숨기기' : '비밀번호 표시'}
-                aria-controls="share-password"
+                aria-controls="document-share-key"
                 aria-pressed={showPassword}
                 onClick={() => setShowPassword(!showPassword)}
               >

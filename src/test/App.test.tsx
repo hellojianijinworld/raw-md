@@ -242,7 +242,7 @@ it('copies a protected link, requires a password to open it, retries a wrong pas
   await edit(source)
   await act(() => button('링크').click())
   await act(() => document.querySelector<HTMLInputElement>('#share-protection')!.click())
-  await input('#share-password', password)
+  await input('#document-share-key', password)
   await act(() => button('공유 링크 복사하기').click())
   await act(() => CompressionWorker.finishAll())
   const encryptedHash = new URL(copied).hash
@@ -255,12 +255,12 @@ it('copies a protected link, requires a password to open it, retries a wrong pas
   expect(host.textContent).toContain('비밀번호로 보호된 문서')
   expect(host.querySelector('textarea')).toBeNull()
   expect(CompressionWorker.pending).toHaveLength(0)
-  await input('#unlock-password', 'wrong')
+  await input('#document-unlock-key', 'wrong')
   await act(() => button('문서 열기').click())
   await act(() => CompressionWorker.finishAll())
   expect(host.querySelector('[role="alert"]')?.textContent).toContain('비밀번호')
   expect(window.location.hash).toBe(encryptedHash)
-  await input('#unlock-password', password)
+  await input('#document-unlock-key', password)
   await act(() => button('문서 열기').click())
   await act(() => CompressionWorker.finishAll())
   expect(host.textContent).toContain('비공개 문서')
@@ -279,7 +279,7 @@ it('cancels an unlock when navigating to another document', async () => {
   const hash = await encryptMarkdown('# secret', brotli, 'password')
   window.history.replaceState(null, '', `/#${hash}`)
   await act(() => root.render(<App />))
-  await input('#unlock-password', 'password')
+  await input('#document-unlock-key', 'password')
   await act(() => button('문서 열기').click())
   const earlier = CompressionWorker.pending[0]
   await act(() => {
@@ -322,7 +322,7 @@ it('generates a strong password and uses it for sharing without placing it in th
   if (!document.querySelector<HTMLInputElement>('#share-protection')!.checked)
     await act(() => document.querySelector<HTMLInputElement>('#share-protection')!.click())
   await act(() => button('강력한 암호 자동 생성').click())
-  const field = document.querySelector<HTMLInputElement>('#share-password')!
+  const field = document.querySelector<HTMLInputElement>('#document-share-key')!
   const generated = field.value
   expect(generated).toMatch(/^[A-Za-z0-9_-]{22}$/)
   expect(field.readOnly).toBe(false)
@@ -342,19 +342,19 @@ it('copies the exact custom password separately from the document link', async (
   await act(() => button('링크').click())
   await act(() => document.querySelector<HTMLInputElement>('#share-protection')!.click())
   const password = '  공백과 한글 🔑 preserve  '
-  await input('#share-password', password)
+  await input('#document-share-key', password)
   const visibility = document.querySelector<HTMLButtonElement>('[aria-label="비밀번호 표시"]')!
-  expect(visibility.parentElement?.querySelector('input')?.id).toBe('share-password')
-  expect(document.querySelector<HTMLInputElement>('#share-password')!.type).toBe('password')
+  expect(visibility.parentElement?.querySelector('input')?.id).toBe('document-share-key')
+  expect(document.querySelector<HTMLInputElement>('#document-share-key')!.type).toBe('password')
   await act(() => visibility.click())
-  expect(document.querySelector<HTMLInputElement>('#share-password')!.type).toBe('text')
+  expect(document.querySelector<HTMLInputElement>('#document-share-key')!.type).toBe('text')
   await act(() => document.querySelector<HTMLButtonElement>('[aria-label="비밀번호 숨기기"]')!.click())
-  expect(document.querySelector<HTMLInputElement>('#share-password')!.type).toBe('password')
+  expect(document.querySelector<HTMLInputElement>('#document-share-key')!.type).toBe('password')
   await act(() => button('비밀번호 복사').click())
   expect(copied).toBe(password)
   expect(CompressionWorker.pending).toHaveLength(0)
   expect(button('비밀번호 복사됨').disabled).toBe(false)
-  await input('#share-password', 'changed password')
+  await input('#document-share-key', 'changed password')
   expect(button('비밀번호 복사').disabled).toBe(false)
 })
 
@@ -371,14 +371,14 @@ it('reports password clipboard denial and lets the user retry', async () => {
   )
   expect(button('비밀번호 복사').disabled).toBe(false)
   await act(() => button('비밀번호 복사').click())
-  expect(copied).toBe(document.querySelector<HTMLInputElement>('#share-password')!.value)
+  expect(copied).toBe(document.querySelector<HTMLInputElement>('#document-share-key')!.value)
 })
 
 it('does not report an old password as copied after it changes, or overlap password and URL writes', async () => {
   await act(() => root.render(<App />))
   await act(() => button('링크').click())
   await act(() => document.querySelector<HTMLInputElement>('#share-protection')!.click())
-  await input('#share-password', 'old password')
+  await input('#document-share-key', 'old password')
   let finish!: () => void
   vi.spyOn(navigator.clipboard, 'writeText').mockImplementationOnce(
     () =>
@@ -388,7 +388,7 @@ it('does not report an old password as copied after it changes, or overlap passw
   )
   await act(() => button('비밀번호 복사').click())
   expect(button('공유 링크 복사하기').disabled).toBe(true)
-  await input('#share-password', 'new password')
+  await input('#document-share-key', 'new password')
   expect(button('공유 링크 복사하기').disabled).toBe(true)
   await act(async () => finish())
   expect(button('비밀번호 복사').disabled).toBe(false)
@@ -426,27 +426,27 @@ it('toggles optional protection and generates or edits passwords without exposin
   await edit('# 세 가지 공유 방식')
   await act(() => button('링크').click())
   expect(document.querySelector<HTMLInputElement>('#share-plain')!.checked).toBe(true)
-  expect(document.querySelector('#share-password')).toBeNull()
+  expect(document.querySelector('#document-share-key')).toBeNull()
   await act(() => document.querySelector<HTMLInputElement>('#share-protection')!.click())
-  expect(document.querySelector<HTMLInputElement>('#share-password')!.readOnly).toBe(false)
+  expect(document.querySelector<HTMLInputElement>('#document-share-key')!.readOnly).toBe(false)
   expect(button('공유 링크 복사하기').disabled).toBe(true)
-  await input('#share-password', 'my manually chosen password')
+  await input('#document-share-key', 'my manually chosen password')
   if (!document.querySelector<HTMLInputElement>('#share-protection')!.checked)
     await act(() => document.querySelector<HTMLInputElement>('#share-protection')!.click())
   await act(() => button('강력한 암호 자동 생성').click())
-  const automatic = document.querySelector<HTMLInputElement>('#share-password')!.value
+  const automatic = document.querySelector<HTMLInputElement>('#document-share-key')!.value
   expect(automatic).toMatch(/^[A-Za-z0-9_-]{22}$/)
   expect(automatic).not.toBe('my manually chosen password')
   await act(() => document.querySelector<HTMLButtonElement>('[aria-label="닫기"]')!.click())
   await act(() => button('링크').click())
-  expect(document.querySelector<HTMLInputElement>('#share-password')!.value).toBe(automatic)
+  expect(document.querySelector<HTMLInputElement>('#document-share-key')!.value).toBe(automatic)
   await act(() => button('다시 생성').click())
-  expect(document.querySelector<HTMLInputElement>('#share-password')!.value).not.toBe(automatic)
-  await input('#share-password', 'edited generated password')
-  expect(document.querySelector<HTMLInputElement>('#share-password')!.value).toBe('edited generated password')
+  expect(document.querySelector<HTMLInputElement>('#document-share-key')!.value).not.toBe(automatic)
+  await input('#document-share-key', 'edited generated password')
+  expect(document.querySelector<HTMLInputElement>('#document-share-key')!.value).toBe('edited generated password')
   expect(button('강력한 암호 자동 생성').disabled).toBe(false)
   await act(() => document.querySelector<HTMLInputElement>('#share-plain')!.click())
-  expect(document.querySelector('#share-password')).toBeNull()
+  expect(document.querySelector('#document-share-key')).toBeNull()
   await edit('# 비밀이었던 원문을 명시적으로 공개 공유')
   expect(window.location.hash).toBe('')
   await act(() => button('공유 링크 복사하기').click())
@@ -501,7 +501,7 @@ it('preserves an unlocked password during section navigation and disables sharea
   window.history.replaceState(null, '', `/#${payload}~h=2`)
   await act(() => root.render(<App />))
   await act(() => {
-    const input = host.querySelector<HTMLInputElement>('#unlock-password')!
+    const input = host.querySelector<HTMLInputElement>('#document-unlock-key')!
     Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!.call(input, password)
     input.dispatchEvent(new Event('input', { bubbles: true }))
   })
@@ -509,7 +509,7 @@ it('preserves an unlocked password during section navigation and disables sharea
   await act(() => CompressionWorker.finishAll())
   await act(() => host.querySelector<HTMLAnchorElement>('a[data-heading-target="1"]')!.click())
   expect(window.location.hash).toBe(`#${payload}~h=1`)
-  expect(host.querySelector('#unlock-password')).toBeNull()
+  expect(host.querySelector('#document-unlock-key')).toBeNull()
   expect(CompressionWorker.pending).toHaveLength(0)
   await act(() => button('수정').click())
   await edit('# 변경\n\n## 다른 목적지')
@@ -551,4 +551,24 @@ it('keeps Mermaid mounted and preview scroll stable during unrelated edits after
   expect(host.querySelector('.mermaid-diagram svg')).toBe(diagram)
   expect(top).not.toHaveBeenCalled()
   expect(window.location.hash).not.toContain('~h=')
+})
+
+it('marks document secrets as non-login fields for password managers in both flows', async () => {
+  await act(() => root.render(<App />))
+  await act(() => button('링크').click())
+  await act(() => document.querySelector<HTMLInputElement>('#share-protection')!.click())
+  const shared = document.querySelector<HTMLInputElement>('[name="document-share-key"]')!
+  expect(shared.type).toBe('password')
+  expect(shared.autocomplete).toBe('off')
+  for (const attr of ['data-bwignore', 'data-1p-ignore', 'data-lpignore'])
+    expect(shared.getAttribute(attr)).toBe('true')
+  await act(() => root.unmount())
+  root = createRoot(host)
+  window.history.replaceState(null, '', '/#e1.AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaG5-qouGbwXzgcgTwpBZwFDipFBslqPDljNw')
+  await act(() => root.render(<App />))
+  const unlock = document.querySelector<HTMLInputElement>('[name="document-unlock-key"]')!
+  expect(unlock.type).toBe('password')
+  expect(unlock.autocomplete).toBe('off')
+  for (const attr of ['data-bwignore', 'data-1p-ignore', 'data-lpignore'])
+    expect(unlock.getAttribute(attr)).toBe('true')
 })
