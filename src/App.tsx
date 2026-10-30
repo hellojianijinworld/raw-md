@@ -11,6 +11,7 @@ import { localizedError, localizeMessage, translate as t } from './i18n/core'
 import { useI18n } from './i18n/useI18n'
 import { runCompressionTask } from './utils/compression'
 import {
+  deleteEmptyProtectedLink,
   listDocuments,
   protectOpenLink,
   putDocument,
@@ -194,6 +195,23 @@ function App() {
   const rememberDocument = useCallback(
     (payload: string, encrypted: boolean, content: string) => {
       if (typeof indexedDB === 'undefined' || !payload) return
+      if (!content.trim()) {
+        if (encrypted) {
+          saveQueueRef.current = saveQueueRef.current
+            .catch(() => {})
+            .then(async () => {
+              const removed = await deleteEmptyProtectedLink(payload)
+              if (
+                documentPayloadRef.current === payload &&
+                activeDocumentRef.current &&
+                removed.includes(activeDocumentRef.current)
+              )
+                updateActiveDocument(null)
+            })
+          void saveQueueRef.current.catch(() => setStorageError(t('storage.stateError')))
+        }
+        return
+      }
       const selected = selectedDocumentRef.current?.payload === payload ? selectedDocumentRef.current.id : null
       selectedDocumentRef.current = null
       const tentativeId = selected ?? crypto.randomUUID()
@@ -366,7 +384,7 @@ function App() {
         const payload = encodeMarkdownToHash(value)
         documentPayloadRef.current = payload
         window.history.replaceState(null, '', `#${payload}`)
-        if (value || activeDocumentRef.current) {
+        if (value.trim()) {
           const id = activeDocumentRef.current ?? crypto.randomUUID()
           if (activeDocumentRef.current !== id) updateActiveDocument(id)
           clearTimeout(saveTimerRef.current)
@@ -459,14 +477,20 @@ function App() {
         unlockedDocumentRef.current = protectedLink ? { payload: documentPayloadRef.current!, password } : null
         setPrivateDraftPending(false)
         setLinkLength(url.length)
-        if (protectedLink) rememberDocument(parseShareFragment(new URL(url).hash).payload, true, '')
+        if (protectedLink) rememberDocument(parseShareFragment(new URL(url).hash).payload, true, markdown)
       }
     }
     copyTimerRef.current = setTimeout(() => setCopyStatus('idle'), 2000)
   }
 
   const handleSaveProtected = async () => {
-    if (savingDocument || copyControllerRef.current || !password || typeof indexedDB === 'undefined') {
+    if (
+      savingDocument ||
+      copyControllerRef.current ||
+      !password ||
+      !markdown.trim() ||
+      typeof indexedDB === 'undefined'
+    ) {
       if (typeof indexedDB === 'undefined') setStorageError(t('storage.unavailableShort'))
       return
     }

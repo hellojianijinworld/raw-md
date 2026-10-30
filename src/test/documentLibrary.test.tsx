@@ -161,6 +161,107 @@ it('saves protected drafts as ciphertext without storing the password or plainte
   expect(JSON.stringify(docs)).not.toContain('test-secret')
 })
 
+it('does not replace a saved draft when its editor is temporarily blank', async () => {
+  await act(() => root.render(<App />))
+  const edit = (value: string) => {
+    const field = host.querySelector('textarea')!
+    Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, 'value')!.set!.call(field, value)
+    field.dispatchEvent(new Event('input', { bubbles: true }))
+  }
+  await act(() => edit('제목이 없는 본문'))
+  await act(async () => new Promise((resolve) => setTimeout(resolve, 500)))
+  await act(() => edit(' \n'))
+  await act(async () => new Promise((resolve) => setTimeout(resolve, 500)))
+  expect((await listDocuments()).map((doc) => doc.value)).toEqual(['제목이 없는 본문'])
+  await act(() => edit('수정한 본문'))
+  await act(async () => new Promise((resolve) => setTimeout(resolve, 500)))
+  expect((await listDocuments()).map((doc) => doc.value)).toEqual(['수정한 본문'])
+})
+
+it('does not offer saving an empty encrypted document to the library', async () => {
+  await act(() => root.render(<App />))
+  await act(() => {
+    const field = host.querySelector('textarea')!
+    Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, 'value')!.set!.call(field, ' \n\t')
+    field.dispatchEvent(new Event('input', { bubbles: true }))
+  })
+  await act(async () => new Promise((resolve) => setTimeout(resolve, 500)))
+  expect(await listDocuments()).toEqual([])
+  await act(() => host.querySelector<HTMLButtonElement>('[aria-label="링크"]')!.click())
+  await act(() => document.querySelector<HTMLInputElement>('#share-protection')!.click())
+  await act(() => {
+    const field = document.querySelector<HTMLInputElement>('#document-share-key')!
+    Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!.call(field, 'test-secret')
+    field.dispatchEvent(new Event('input', { bubbles: true }))
+  })
+  const save = [...document.querySelectorAll('button')].find(
+    (button) => button.textContent === '암호화해 문서함에 저장',
+  )!
+  expect(save.disabled).toBe(true)
+  expect(await listDocuments()).toEqual([])
+})
+
+it('still records a nonempty protected link copied from the editor', async () => {
+  vi.stubGlobal('ClipboardItem', undefined)
+  Object.defineProperty(navigator, 'clipboard', { configurable: true, value: { writeText: vi.fn() } })
+  await act(() => root.render(<App />))
+  await act(() => {
+    const field = host.querySelector('textarea')!
+    Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, 'value')!.set!.call(field, '# 비밀 문서')
+    field.dispatchEvent(new Event('input', { bubbles: true }))
+  })
+  await act(() => host.querySelector<HTMLButtonElement>('[aria-label="링크"]')!.click())
+  await act(() => document.querySelector<HTMLInputElement>('#share-protection')!.click())
+  await act(() => {
+    const field = document.querySelector<HTMLInputElement>('#document-share-key')!
+    Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!.call(field, 'test-secret')
+    field.dispatchEvent(new Event('input', { bubbles: true }))
+  })
+  await act(() =>
+    [...document.querySelectorAll('button')].find((button) => button.textContent === '공유 링크 복사하기')!.click(),
+  )
+  await act(() => CompressionWorker.finishAll())
+  await act(async () => new Promise((resolve) => setTimeout(resolve, 100)))
+  const docs = await listDocuments()
+  const protectedDoc = docs.find((doc) => doc.kind === 'link' && doc.value.startsWith('e1.'))
+  expect(protectedDoc).toBeDefined()
+  expect(protectedDoc?.content).toBeUndefined()
+})
+
+it('removes an empty protected record after it has been unlocked', async () => {
+  const brotli = createRequire(import.meta.url)('brotli-wasm')
+  const payload = await encryptMarkdown(' \n', brotli, 'empty-test')
+  await putDocument({
+    id: 'empty-protected',
+    kind: 'link',
+    value: payload,
+    title: '비밀번호로 보호된 문서',
+    updatedAt: 1,
+    pinned: true,
+  })
+  await putDocument({
+    id: 'other-protected',
+    kind: 'link',
+    value: 'e1.other',
+    title: '비밀번호로 보호된 문서',
+    updatedAt: 2,
+    pinned: false,
+  })
+  window.history.replaceState(null, '', `/#${payload}`)
+  await act(() => root.render(<App />))
+  await act(() => {
+    const field = host.querySelector<HTMLInputElement>('#document-unlock-key')!
+    Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!.call(field, 'empty-test')
+    field.dispatchEvent(new Event('input', { bubbles: true }))
+  })
+  await act(() =>
+    [...document.querySelectorAll('button')].find((button) => button.textContent === '문서 열기')!.click(),
+  )
+  await act(() => CompressionWorker.finishAll())
+  await act(async () => new Promise((resolve) => setTimeout(resolve, 70)))
+  expect((await listDocuments()).map((doc) => doc.id)).toEqual(['other-protected'])
+})
+
 it('saves the last edit before navigating and typing in another document', async () => {
   await act(() => root.render(<App />))
   const edit = (value: string) => {

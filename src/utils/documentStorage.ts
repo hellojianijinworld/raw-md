@@ -1,4 +1,5 @@
 import { translate as t } from '../i18n/core'
+import { isEncryptedHash } from './url'
 
 const MAX_DOCUMENT_STORAGE = 1_000_000_000
 const FALLBACK_DOCUMENT_STORAGE = 100_000_000
@@ -49,6 +50,12 @@ export function documentSize(doc: StoredDocument): number {
   return new TextEncoder().encode(JSON.stringify(doc)).byteLength
 }
 
+function isEmptyDocument(doc: StoredDocument): boolean {
+  if (doc.kind === 'link' && isEncryptedHash(doc.value)) return false
+  const content = doc.kind === 'draft' ? doc.value : doc.content
+  return typeof content === 'string' && !content.trim()
+}
+
 function openDatabase(): Promise<IDBDatabase> {
   return new Promise((resolve, reject) => {
     const request = indexedDB.open(DB_NAME, 2)
@@ -66,11 +73,19 @@ function openDatabase(): Promise<IDBDatabase> {
 export async function listDocuments(): Promise<StoredDocument[]> {
   const db = await openDatabase()
   return new Promise((resolve, reject) => {
-    const tx = db.transaction(STORE, 'readonly')
-    const request = tx.objectStore(STORE).getAll()
+    const tx = db.transaction(STORE, 'readwrite')
+    const store = tx.objectStore(STORE)
+    const request = store.getAll()
+    const documents: StoredDocument[] = []
+    request.onsuccess = () => {
+      for (const doc of request.result as StoredDocument[]) {
+        if (isEmptyDocument(doc)) store.delete(doc.id)
+        else documents.push(doc)
+      }
+    }
     tx.oncomplete = () => {
       db.close()
-      resolve(request.result as StoredDocument[])
+      resolve(documents)
     }
     tx.onabort = () => {
       db.close()
@@ -80,6 +95,7 @@ export async function listDocuments(): Promise<StoredDocument[]> {
 }
 
 export async function putDocument(doc: StoredDocument, options: SaveOptions = {}): Promise<void> {
+  if (isEmptyDocument(doc)) return
   const estimate = options.maxBytes === undefined ? await readStorageEstimate() : undefined
   try {
     await writeDocument(doc, options, false, estimate)
@@ -195,6 +211,33 @@ export async function protectOpenLink(tabId: string, payload: string): Promise<s
     tx.oncomplete = () => {
       db.close()
       resolve(id)
+    }
+    tx.onabort = () => {
+      db.close()
+      reject(tx.error ?? request.error)
+    }
+  })
+}
+
+export async function deleteEmptyProtectedLink(payload: string): Promise<string[]> {
+  if (!isEncryptedHash(payload)) return []
+  const db = await openDatabase()
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(STORE, 'readwrite')
+    const store = tx.objectStore(STORE)
+    const request = store.getAll()
+    const removed: string[] = []
+    request.onsuccess = () => {
+      for (const doc of request.result as StoredDocument[]) {
+        if (doc.kind === 'link' && doc.value === payload) {
+          removed.push(doc.id)
+          store.delete(doc.id)
+        }
+      }
+    }
+    tx.oncomplete = () => {
+      db.close()
+      resolve(removed)
     }
     tx.onabort = () => {
       db.close()

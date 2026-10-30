@@ -240,7 +240,7 @@ export default function SharePopover({
           <button
             type="button"
             className="btn share-copy"
-            disabled={busy || copyingPassword || !password}
+            disabled={busy || copyingPassword || !password || !markdown.trim()}
             onClick={onSaveDocument}
           >
             {savingDocument ? t('share.encrypting') : documentSaved ? t('share.saved') : t('share.encryptSave')}
