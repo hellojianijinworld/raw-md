@@ -1,8 +1,9 @@
 import { Check, Copy, Eye, EyeOff, X } from 'lucide-react'
-import { type RefObject, useEffect, useRef, useState } from 'react'
+import { type RefObject, useEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { translate as t } from '../i18n/core'
 import { useI18n } from '../i18n/useI18n'
+import { countCharacters } from '../utils/countCharacters'
 import { documentSecretInput } from '../utils/documentSecret'
 import { formatBytes } from '../utils/formatBytes'
 import { generateSharePassword, type ShareMode } from '../utils/password'
@@ -51,6 +52,7 @@ export default function SharePopover({
   const [passwordCopyStatus, setPasswordCopyStatus] = useState<'idle' | 'copied' | 'error'>('idle')
   const passwordRevision = useRef(0)
   const bytes = new TextEncoder().encode(markdown).length
+  const characters = useMemo(() => countCharacters(markdown), [markdown])
   const busy = status === 'compressing' || savingDocument
   const protectedLink = mode !== 'plain'
 
@@ -113,6 +115,14 @@ export default function SharePopover({
         </button>
       </div>
       <dl className="share-size">
+        <div>
+          <dt>{t('share.sourceCharacters')}</dt>
+          <dd>
+            {characters.approximate ? t('share.approximate') : ''}
+            {characters.count.toLocaleString(locale)}
+            {t('share.characters')}
+          </dd>
+        </div>
         <div>
           <dt>
             {t('share.sourceSize')}

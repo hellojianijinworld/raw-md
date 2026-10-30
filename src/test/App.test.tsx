@@ -84,6 +84,19 @@ async function edit(value: string) {
   })
 }
 
+it('shows source character count separately from its UTF-8 size', async () => {
+  await act(() => root.render(<App />))
+  await edit('한👨‍👩‍👧‍👦')
+  await act(() => button('링크').click())
+  const rows = [...document.querySelectorAll('.share-size > div')]
+  expect(
+    rows.find((row) => row.querySelector('dt')?.textContent === '원문 글자 수')?.querySelector('dd')?.textContent,
+  ).toBe('2자')
+  expect(
+    rows.find((row) => row.querySelector('dt')?.textContent === '원문 용량UTF-8')?.querySelector('dd')?.textContent,
+  ).toBe('28 B')
+})
+
 it('shows loading while opening a compressed link, then renders its source', async () => {
   const source = '# 비동기 복원\n\n한글 문서의 원문입니다.\n'.repeat(30)
   const hash = encodeMarkdown(source, brotli)
