@@ -1,0 +1,49 @@
+{
+  "name": "raw-md",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "test": "npm run build:codec && npm run build:ai && vitest run --fileParallelism=false",
+    "build": "tsc -b && npm run build:codec && npm run build:ai && vite build",
+    "build:codec": "tsc -p tsconfig.agent.json && node scripts/build-codec.mjs",
+    "build:ai": "node scripts/package-ai.mjs",
+    "lint": "biome check src/ agent/ scripts/build-codec.mjs scripts/package-ai.mjs skills/raw-md-export/scripts/check-update.mjs",
+    "format": "biome check --write src/ agent/ scripts/build-codec.mjs scripts/package-ai.mjs skills/raw-md-export/scripts/check-update.mjs",
+    "preview": "vite preview",
+    "test:security": "vitest run --config vitest.security.config.ts"
+  },
+  "dependencies": {
+    "@primer/primitives": "^11.7.1",
+    "brotli-wasm": "3.0.1",
+    "github-markdown-css": "^5.9.0",
+    "github-slugger": "^2.0.0",
+    "hash-wasm": "4.12.0",
+    "katex": "^0.16.45",
+    "lucide-react": "^1.14.0",
+    "lz-string": "^1.5.0",
+    "pele": "1.10.0",
+    "react": "^19.2.5",
+    "react-dom": "^19.2.5",
+    "react-markdown": "^10.1.0",
+    "rehype-highlight": "^7.0.2",
+    "rehype-katex": "^7.0.1",
+    "rehype-sanitize": "^6.0.0",
+    "remark-gfm": "^4.0.1",
+    "remark-math": "^6.0.0"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.4.13",
+    "@types/lz-string": "^1.3.34",
+    "@types/node": "^24.12.2",
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
+    "@vitejs/plugin-react": "^6.0.1",
+    "fake-indexeddb": "^6.2.6",
+    "jsdom": "^30.1.3",
+    "typescript": "~6.0.2",
+    "vite": "^8.0.10",
+    "vitest": "^4.1.5"
+  }
+}

@@ -1,0 +1,2 @@
+# Retire the legacy deployment metadata path, including retained CDN assets.
+/version.json / 302

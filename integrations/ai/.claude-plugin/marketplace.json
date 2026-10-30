@@ -1,0 +1,11 @@
+{
+  "name": "raw-md-ai",
+  "owner": { "name": "raw-md" },
+  "plugins": [
+    {
+      "name": "raw-md-ai",
+      "source": "./plugin",
+      "description": "Read raw-md links and export Markdown links with an offline CLI."
+    }
+  ]
+}

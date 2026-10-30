@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <style>path{fill:#18181b}@media(prefers-color-scheme:dark){path{fill:#fafafa}}</style>
+  <path d="M8 2h11v4H8v22h16V13h4v15a4 4 0 0 1-4 4H8a4 4 0 0 1-4-4V6a4 4 0 0 1 4-4Zm13 0 9 9h-9V2Z"/>
+  <path transform="translate(2 2) scale(.8)" d="m13 12-.6 4H10v3h1.9l-.4 3H9v3h2l-.4 3h3l.4-3h3l-.4 3h3l.4-3H23v-3h-2.6l.4-3H23v-3h-1.8l.6-4h-3l-.6 4h-3l.6-4h-3Zm1.5 7h3l-.4 3h-3l.4-3Z"/>
+</svg>
