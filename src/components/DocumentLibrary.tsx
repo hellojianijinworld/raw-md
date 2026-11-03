@@ -109,8 +109,7 @@ export default function DocumentLibrary({
         </header>
         <div className="library-content">
           <p>
-            {t('library.name')}
-            {formatBytes(usage)}
+            {t('library.name')} {formatBytes(usage)}
             {limit !== undefined ? ` / ${formatBytes(limit)}` : ''}
           </p>
           <p className="share-note">{t('library.note')}</p>
