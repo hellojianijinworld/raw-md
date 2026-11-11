@@ -23,6 +23,7 @@ import {
 } from '../utils/headingNavigation'
 import { sanitizeSchema } from '../utils/sanitize'
 import { formatShareFragment, parseShareFragment } from '../utils/shareFragment'
+import { remarkTableBreaks } from '../utils/tableBreaks'
 import MermaidDiagram from './MermaidDiagram'
 import 'github-markdown-css/github-markdown.css'
 import 'katex/dist/katex.min.css'
@@ -242,7 +243,7 @@ export default function MarkdownViewer({ content, sectionLinksEnabled = true }: 
         <p style={{ color: 'var(--fgColor-muted)' }}>{t('editor.preview')}</p>
       ) : (
         <ReactMarkdown
-          remarkPlugins={[remarkGfm, remarkMath]}
+          remarkPlugins={[remarkGfm, remarkMath, remarkTableBreaks]}
           rehypePlugins={[
             [rehypeSanitize, sanitizeSchema],
             [rehypeHeadingNavigation, { payload: fragment.payload, base, canShare }],

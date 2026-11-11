@@ -9,6 +9,7 @@ import { afterAll, beforeAll, expect, it } from 'vitest'
 
 const root = fileURLToPath(new URL('../../', import.meta.url))
 const archive = join(root, 'public/ai/raw-md-ai.zip')
+const pluginVersion = JSON.parse(readFileSync(join(root, 'integrations/ai/plugin/plugin.json'), 'utf8')).version
 const directory = mkdtempSync(join(tmpdir(), 'raw-md-package-'))
 const extracted = join(directory, 'raw-md-ai')
 let entries: string[]
@@ -69,7 +70,7 @@ it('builds a deterministic archive containing only the optional integration file
   expect(readFileSync(archive)).toEqual(originalArchive)
   const sdk = readFileSync(join(extracted, 'plugin/skills/raw-md-export/scripts/share.mjs'))
   expect(json(join(root, 'public/ai/manifest.json'))).toMatchObject({
-    version: '0.1.0',
+    version: pluginVersion,
     artifact: 'raw-md-ai.zip',
     sha256: createHash('sha256').update(originalArchive).digest('hex'),
     bytes: originalArchive.length,
@@ -93,11 +94,11 @@ it('resolves both marketplaces to one plugin with the shared skill and exact off
   expect(json(join(codexPlugin, 'plugin.json'))).toMatchObject({
     $schema: 'https://agent-plugins.org/schemas/1.0.0/plugin.schema.json',
     name: 'raw-md-ai',
-    version: '0.1.0',
+    version: pluginVersion,
   })
   expect(json(join(claudePlugin, '.claude-plugin/plugin.json'))).toMatchObject({
     name: 'raw-md-ai',
-    version: '0.1.0',
+    version: pluginVersion,
   })
   for (const file of [
     'SKILL.md',
@@ -119,13 +120,13 @@ it('resolves both marketplaces to one plugin with the shared skill and exact off
 
 it('keeps update records inside the extracted skill and out of the distributed archive', () => {
   const skill = join(extracted, 'plugin/skills/raw-md-export')
-  expect(json(join(skill, 'version.json'))).toEqual({ version: '0.1.0' })
+  expect(json(join(skill, 'version.json'))).toEqual({ version: pluginVersion })
   const output = spawnSync(
     process.execPath,
     [
       '--input-type=module',
       '--eval',
-      `globalThis.fetch = async () => new Response(JSON.stringify({ version: '0.1.1' }));
+      `globalThis.fetch = async () => new Response(JSON.stringify({ version: '999.0.0' }));
 const { checkForUpdates } = await import(${JSON.stringify(pathToFileURL(join(skill, 'scripts/check-update.mjs')).href)});
 process.stdout.write(JSON.stringify(await checkForUpdates()));`,
     ],
@@ -133,7 +134,7 @@ process.stdout.write(JSON.stringify(await checkForUpdates()));`,
   )
   expect(output.status).toBe(0)
   expect(JSON.parse(output.stdout).status).toBe('update-available')
-  expect(json(join(skill, '.update-check.json')).installedVersion).toBe('0.1.0')
+  expect(json(join(skill, '.update-check.json')).installedVersion).toBe(pluginVersion)
   expect(entries.some((entry) => entry.includes('.update-check'))).toBe(false)
   expect(build().status).toBe(0)
   expect(readFileSync(archive)).toEqual(originalArchive)

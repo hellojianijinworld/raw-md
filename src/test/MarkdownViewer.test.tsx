@@ -89,6 +89,22 @@ it('makes wide GFM tables keyboard-scrollable without losing headers, alignment 
   expect(region.closest('.markdown-table')?.nextElementSibling?.textContent).toBe('뒤 문단')
 })
 
+it('renders only plain br tags inside table cells as line breaks', () => {
+  const host = render(
+    '| 머리<br>다음 | 설명 |\n| --- | --- |\n| 하나<br>둘<BR />셋<br/>넷 | **강조<br />줄** `코드<br>그대로` \\<br> <br onclick="alert(1)"> <img src=x onerror=alert(1)> |\n\n표 밖<br>그대로\n\n```html\n<br>\n```',
+  )
+  expect(host.querySelector('thead th')?.innerHTML.replaceAll('\n', '')).toBe('머리<br>다음')
+  const cells = host.querySelectorAll('tbody td')
+  expect(cells[0].innerHTML.replaceAll('\n', '')).toBe('하나<br>둘<br>셋<br>넷')
+  expect(cells[1].querySelector('strong')?.innerHTML.replaceAll('\n', '')).toBe('강조<br>줄')
+  expect(cells[1].querySelector('code')?.textContent).toBe('코드<br>그대로')
+  expect(cells[1].textContent).toContain('<br>')
+  expect(cells[1].querySelectorAll('br')).toHaveLength(1)
+  expect(cells[1].querySelector('img')).toBeNull()
+  expect(host.querySelector('p br')).toBeNull()
+  expect(host.querySelector('pre code')?.textContent).toBe('<br>\n')
+})
+
 describe('fenced code highlighting', () => {
   it.each([
     'diff',
